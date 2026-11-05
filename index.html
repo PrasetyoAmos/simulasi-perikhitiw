@@ -125,10 +125,21 @@ table.data .c-gk{background:#5b9cf50c}table.data .c-tax{background:#f0b34a0c}tab
 table.data th.c-gk{box-shadow:inset 0 -3px 0 var(--gk);background:#233654}
 table.data th.c-tax{box-shadow:inset 0 -3px 0 var(--tax);background:#3a3550}
 table.data th.c-cfx{box-shadow:inset 0 -3px 0 var(--cfx);background:#34305a}
-table.data tbody tr:nth-child(even) td{background-image:linear-gradient(#ffffff08,#ffffff08)}
+table.data tbody tr.alt td{background-image:linear-gradient(#ffffff08,#ffffff08)}
+table.data tbody tr.tr{cursor:pointer}
+table.data tbody tr.tr.open td{background-image:linear-gradient(#5b9cf522,#5b9cf522)}
+tr.det{display:none}tr.open+tr.det{display:table-row}
+table.data tr.det td{padding:0;border-left:0;text-align:left;background:#0f1626;white-space:normal}
+.detbox{padding:12px 16px;position:sticky;left:0;max-width:min(100%,1100px)}
+.detsum{margin-top:8px;font-size:12.5px;color:var(--mut)}
+table.data table.mini{width:auto;min-width:760px;margin-top:8px}
+table.data table.mini th,table.data table.mini td{position:static;padding:6px 12px;text-align:right;border-left:0;border-bottom:1px solid var(--line);background:none!important;background-image:none!important;box-shadow:none;height:auto;line-height:1.4;font-size:12.5px;color:var(--txt)}
+table.data table.mini th{color:var(--mut);font-weight:700}
+table.data table.mini td:nth-child(2),table.data table.mini th:nth-child(2){text-align:left}
 table.data tbody tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9cf51a)}
 table.data td.ctr,table.data th.ctr{text-align:center}
 tr.new td{animation:rowin .9s ease-out}
+table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9cf51a)}
 @keyframes rowin{from{background-color:#5b9cf555}to{background-color:transparent}}
 .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
 .tag.w{background:#34c78a26;color:var(--win)}.tag.l{background:#ef6a6a26;color:var(--lose)}
@@ -324,7 +335,7 @@ const H2TIPS = [
   ['Pendapatan exchange', 'Tiap batang = satu hari. Biru: fee GK (pendapatan exchange). Kuning: pajak (titipan negara). Ungu: fee CFX. Arahkan kursor ke batang untuk melihat angkanya.'],
   ['Peluang sebenarnya', 'Simulasi diulang 500 kali dengan kode acak berbeda. Ini menunjukkan peluang yang sesungguhnya, sedangkan grafik di atas hanya satu contoh. P10-P90: rentang tempat sebagian besar hasil berada.'],
   ['Siapa dapat apa', 'Pembagian uang dari semua trade: MM5, counterparty (dicatat terpisah, bukan modal MM5), exchange, negara, dan CFX. Total semua pihak mendekati nol karena uang hanya berpindah.'],
-  ['Rincian setiap trade', 'Satu baris = satu trade. Fee GK, pajak, dan fee CFX adalah total dua sisi (MM5 + counterparty). Laba MM5 = hasil jual dikurangi biaya dan modal trade itu. Laba kumulatif = jumlah laba sampai trade itu. Hasil counterparty = untung/rugi lawan transaksi.'],
+  ['Rincian setiap trade', 'Satu baris = satu trade (beli lalu jual). Notional = nilai Rupiah (koin x harga). Klik baris untuk melihat langkah beli dan jual seperti di Excel. Fee GK, pajak, dan fee CFX adalah total dua sisi. Laba trade = hasil jual dikurangi biaya dan modal. Untung/rugi counterparty = lawan transaksi.'],
   ['Cek ke Excel', 'Mencocokkan hitungan dashboard dengan empat flow di Excel Mas Vino. "Gain cara Excel" memakai rumus asli Excel; "Laba bersih" juga mengurangkan pajak jual.'],
 ];
 function addQ(parent, tip) {
@@ -346,6 +357,7 @@ document.querySelectorAll('h2').forEach(h => { const t = H2TIPS.find(x => h.text
 
 const rp = n => (n < 0 ? '−Rp' : 'Rp') + Math.abs(Math.round(n)).toLocaleString('id-ID');
 const rpS = n => { const a = Math.abs(n), s = n < 0 ? '−' : ''; return a >= 1e9 ? s + (a/1e9).toFixed(2).replace('.',',') + ' M' : a >= 1e6 ? s + (a/1e6).toFixed(1).replace('.',',') + ' jt' : s + Math.round(a/1e3) + ' rb'; };
+const kn = v => v.toLocaleString('id-ID', { maximumFractionDigits: 4, minimumFractionDigits: 4 });
 const pct = (x, d = 1) => (x * 100).toFixed(d).replace('.', ',') + '%';
 const cls = n => n >= 0 ? 'pos' : 'neg';
 
@@ -470,7 +482,7 @@ function draw(k) {
   $('tk').className = 'tk' + (tr ? (tr.win ? ' w' : ' l') : '');
   $('tk').innerHTML = !tr ? `<div class="top">Belum ada trade yang berjalan.</div><div class="main">Tekan "Putar ulang" untuk melihat simulasinya trade demi trade.</div><div></div>` :
     `<div class="top">Hari ${tr.day} dari ${p.days} · trade ke-${tr.no} di hari ini${done ? ' · <b>simulasi selesai</b>' : ''}</div>
-     <div class="main flash">MM5 beli <b>${rp(tr.vol)}</b> di Rp${Math.round(tr.buy).toLocaleString('id-ID')}/koin, lalu jual di Rp${Math.round(tr.sell).toLocaleString('id-ID')}/koin <b>(${tr.move >= 0 ? '+' : ''}${(tr.move*100).toFixed(1).replace('.',',')}%)</b>. Hasil penjualan kotor <b>${rp(tr.gross)}</b>.</div>
+     <div class="main flash">MM5 <b>beli ${kn(tr.E)} koin</b> senilai <b>${rp(tr.vol)}</b> (harga Rp${Math.round(tr.buy).toLocaleString('id-ID')}/koin), lalu <b>jual ${kn(tr.Enet)} koin</b> senilai <b>${rp(tr.gross)}</b> (harga Rp${Math.round(tr.sell).toLocaleString('id-ID')}/koin, <b>${tr.move >= 0 ? '+' : ''}${(tr.move*100).toFixed(1).replace('.',',')}%</b>).</div>
      <div class="res flash"><small>${tr.win ? 'MENANG' : 'KALAH'}</small>${rp(tr.mm.pnl)}</div>
      <div class="sub flash">Dari trade ini: fee GK ${rp(tr.ex.gk)} · pajak ${rp(tr.ex.tax)} · fee CFX ${rp(tr.ex.cfx)} (total dua sisi)</div>`;
 
@@ -523,20 +535,29 @@ function draw(k) {
   // tabel
   const f0 = v => Math.round(v).toLocaleString('id-ID');
   const nr = v => (v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('id-ID');
-  const rowHtml = (x, isNew) => `<tr class="${isNew ? 'new' : ''}"><td>${x.day}</td><td>${x.no}</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${f0(x.sell)}</td><td>${nr(x.gross)}</td><td class="${x.move>=0?'pos':'neg'}">${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%</td><td class="ctr"><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td class="gs c-gk">${nr(x.ex.gk)}</td><td class="c-tax">${nr(x.ex.tax)}</td><td class="c-cfx">${nr(x.ex.cfx)}</td><td class="gs ${x.mm.pnl>=0?'pos':'neg'}">${nr(x.mm.pnl)}</td><td class="${x.cum>=0?'pos':'neg'}">${nr(x.cum)}</td><td class="gs ${x.cp.pnl>=0?'pos':'neg'}">${nr(x.cp.pnl)}</td></tr>`;
+  const sg = v => (v < 0 ? 'neg' : 'pos');
+  const detail = x => {
+    const m = x.mm, netBuy = x.vol - m.buyGK - m.buyCFX, netSell = x.gross - m.sellGK - m.sellCFX;
+    return `<tr class="det"><td colspan="16"><div class="detbox"><b>Langkah trade ini (format Excel Mas Vino, sisi MM5)</b>
+      <table class="mini"><thead><tr><th>Step</th><th>Keterangan</th><th>Notional / Amount IDR</th><th>Rate per koin</th><th>Amount koin</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Net (cara Excel)</th></tr></thead><tbody>
+      <tr><td>1</td><td>MM5 membeli koin</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(m.buyGK)}</td><td>0</td><td>${nr(m.buyCFX)}</td><td>${nr(netBuy)}</td></tr>
+      <tr><td>2</td><td>MM5 menjual koin</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(m.sellGK)}</td><td>${nr(m.sellTax)}</td><td>${nr(m.sellCFX)}</td><td>${nr(netSell)}</td></tr></tbody></table>
+      <div class="detsum">Gain cara Excel (net jual − net beli): <b class="${sg(m.excelGain)}">${nr(m.excelGain)}</b> · Laba bersih setelah pajak jual: <b class="${sg(m.pnl)}">${nr(m.pnl)}</b> · Koin terpotong sebagai fee beli: ${kn(x.E - x.Enet)} koin · Fee beli dibayar dalam koin, fee jual dan pajak dari hasil penjualan.</div></div></td></tr>`;
+  };
+  const rowHtml = (x, isNew, i) => `<tr class="tr ${isNew ? 'new' : ''} ${i % 2 ? 'alt' : ''}" title="Klik untuk melihat langkah beli dan jual"><td>${x.day}</td><td>${x.no}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(x.vol)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(x.gross)}</td><td class="${x.move>=0?'pos':'neg'}">${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%</td><td class="ctr"><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td class="gs c-gk">${nr(x.ex.gk)}</td><td class="c-tax">${nr(x.ex.tax)}</td><td class="c-cfx">${nr(x.ex.cfx)}</td><td class="gs ${sg(x.mm.pnl)}">${nr(x.mm.pnl)}</td><td class="${sg(x.cum)}">${nr(x.cum)}</td><td class="gs ${sg(x.cp.pnl)}">${nr(x.cp.pnl)}</td></tr>` + detail(x);
   const shown = Math.min(k, 600);
   if (shown === 0 || ROWS > shown || !$('tbl').tBodies[0]) {
     $('tbl').innerHTML = `<thead>
-      <tr class="grp"><th colspan="8" class="g-trade">Trade</th><th colspan="3" class="g-fee gs">Fee &amp; pajak (kedua pihak)</th><th colspan="2" class="g-mm gs">MM5</th><th class="g-cp gs">Counterparty</th></tr>
-      <tr class="cols"><th>Hari</th><th>#</th><th>Nilai beli (Rp)</th><th>Harga beli</th><th>Harga jual</th><th>Nilai jual (Rp)</th><th>Perubahan</th><th class="ctr">Hasil</th><th class="gs c-gk">Fee GK</th><th class="c-tax">Pajak</th><th class="c-cfx">Fee CFX</th><th class="gs">Laba trade (Rp)</th><th>Laba kumulatif (Rp)</th><th class="gs">Untung/rugi (Rp)</th></tr></thead><tbody></tbody>`;
+      <tr class="grp"><th colspan="10" class="g-trade">Trade (beli lalu jual)</th><th colspan="3" class="g-fee gs">Fee &amp; pajak (kedua pihak)</th><th colspan="2" class="g-mm gs">MM5</th><th class="g-cp gs">Counterparty</th></tr>
+      <tr class="cols"><th>Hari</th><th>#</th><th>Harga beli</th><th>Koin dibeli</th><th>Notional beli (Rp)</th><th>Harga jual</th><th>Koin dijual</th><th>Notional jual (Rp)</th><th>Perubahan</th><th class="ctr">Hasil</th><th class="gs c-gk">Fee GK</th><th class="c-tax">Pajak</th><th class="c-cfx">Fee CFX</th><th class="gs">Laba trade (Rp)</th><th>Laba kumulatif (Rp)</th><th class="gs">Untung/rugi (Rp)</th></tr></thead><tbody></tbody>`;
     ROWS = 0;
   }
   const tb = $('tbl').tBodies[0];
   if (shown > ROWS) {
-    tb.insertAdjacentHTML('beforeend', s.trades.slice(ROWS, shown).map((x, i, a) => rowHtml(x, i === a.length - 1 && !done)).join(''));
+    tb.insertAdjacentHTML('beforeend', s.trades.slice(ROWS, shown).map((x, i, a) => rowHtml(x, i === a.length - 1 && !done, ROWS + i)).join(''));
     ROWS = shown; $('tblw').scrollTop = $('tblw').scrollHeight;
   }
-  $('tblNote').textContent = `Kolom Fee GK, Pajak, dan Fee CFX (Rp) adalah total dua sisi (MM5 + counterparty) untuk trade itu. Semua angka dalam Rupiah; harga adalah Rupiah per koin.${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
+  $('tblNote').textContent = `Klik baris untuk melihat langkah beli dan jual seperti di Excel. Notional = nilai Rupiah transaksi (jumlah koin x harga). Koin dijual lebih sedikit dari koin dibeli karena fee beli dipotong dalam koin. Fee GK, Pajak, dan Fee CFX adalah total dua sisi (MM5 + counterparty).${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
 }
 
 /* ---------- animasi ---------- */
@@ -559,8 +580,8 @@ function rerun() { prepare(); play(true); }
 
 function csv() {
   if (!last) return;
-  const h = ['hari','no','nilai_beli','harga_beli','harga_jual','hasil','gross_jual','fee_gk_total','pajak_total','fee_cfx_total','laba_mm5','kumulatif_mm5','hasil_counterparty','kas_mm5'];
-  const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.buy.toFixed(2),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),x.cash.toFixed(2)].join(',')));
+  const h = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total','pajak_total','fee_cfx_total','laba_mm5','kumulatif_mm5','hasil_counterparty','kas_mm5'];
+  const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.E.toFixed(6),x.buy.toFixed(2),x.Enet.toFixed(6),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),x.cash.toFixed(2)].join(',')));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
   a.download = 'simulasi-mm5.csv'; a.click(); URL.revokeObjectURL(a.href);
@@ -568,6 +589,7 @@ function csv() {
 
 function syncMode() { const t = $('tradeMode').value === 'total'; $('modeTotal').style.display = t ? '' : 'none'; $('modeRandom').style.display = t ? 'none' : ''; }
 $('tradeMode').addEventListener('change', syncMode);
+$('tbl').addEventListener('click', e => { const tr = e.target.closest('tr.tr'); if (tr) tr.classList.toggle('open'); });
 let timer;
 IDS.forEach(i => $(i).addEventListener($(i).tagName === 'SELECT' ? 'change' : 'input', () => { clearTimeout(timer); timer = setTimeout(rerun, 200); }));
 $('play').onclick = () => play(true);
