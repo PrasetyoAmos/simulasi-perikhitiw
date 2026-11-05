@@ -453,7 +453,7 @@ let last = null, PRE = null, DOM = null, X = null, MAXINC = 1, ANIM = { k: 0, ti
 
 function prepare() {
   const p = params();
-  const s = p.ensure === 'none' ? Sim.simulate(p, p.seed) : Sim.simulateEnding(p, p.seed, p.ensure === 'target' ? p.target : 1, 3000, p.ensure === 'target' ? p.target * 1.25 : null, r => { const n = r.trades.length; return n < 4 || Math.abs(r.trades.filter(x => x.win).length / n - p.winRate) <= 0.15; });
+  const s = p.ensure === 'none' ? Sim.simulate(p, p.seed) : Sim.simulateEnding(p, p.seed, p.ensure === 'target' ? p.target : 1, 3000, p.ensure === 'target' ? p.target * 1.25 : null, r => { const n = r.trades.length; return n < 4 || Math.abs(r.trades.filter(x => x.win).length / n - p.winRate) <= 0.08; });
   last = { p, s };
   // posisi x tiap trade (hari ke-n, pecahan sesuai urutan dalam hari)
   const perDay = {}; s.trades.forEach(t => perDay[t.day] = (perDay[t.day] || 0) + 1);
@@ -645,14 +645,14 @@ function setP(o) { Object.keys(o).forEach(k => $(k).value = o[k]); rerun(); }
 const PRESETS = {
   vino:    { d: '<b>Mas Vino:</b> trade menang besar (Rp200–325 jt) di harga jauh di atas rata-rata, trade kalah kecil. MM5 sering kalah, tapi saldo akhir untung. Berhenti trade saat target tercapai.',
              v: { winRate: 40, winMin: 9.3, winMax: 38.7, loseMin: 3, loseMax: 5, winVolMin: 200000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 10000000, jitter: 0, maxWinStreak: 3, stopAtTarget: '1', minTrades: 1, maxTrades: 4 } },
-  kecil:   { d: '<b>Kecil:</b> Rp3 M dibagi 30 trade, menang-kalah seimbang (±50%). Seperti trading normal: ada trade minus kecil dan hari tanpa menang, tapi akhirnya capai target (±Rp375–465 jt).',
-             v: { totalAmount: 3000000000, totalTrades: 30, winMin: 8, winMax: 30, loseMin: 4, loseMax: 12, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0, winRate: 50,  } },
-  sedang:  { d: '<b>Sedang:</b> Rp2,2 M dibagi 20 trade, menang-kalah seimbang (±50%). Ada trade minus dan hari tanpa menang, akhirnya capai target (±Rp375–465 jt).',
-             v: { totalAmount: 2200000000, totalTrades: 20, winMin: 10, winMax: 35, loseMin: 4, loseMax: 12, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0, winRate: 50,  } },
-  besar:   { d: '<b>Besar:</b> Rp2 M dibagi 16 trade besar, menang-kalah seimbang (±50%). Ada trade minus yang lebih dalam, akhirnya capai target (±Rp375–465 jt).',
-             v: { totalAmount: 2000000000, totalTrades: 16, winMin: 10, winMax: 36, loseMin: 5, loseMax: 14, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0, winRate: 50,  } },
-  agresif: { d: '<b>Agresif:</b> hanya 7 trade, total beli Rp2 M, menang-kalah seimbang tapi selisih harga lebar: minus bisa dalam, menang bisa besar. Akhirnya capai target (±Rp375–465 jt).',
-             v: { totalAmount: 2000000000, totalTrades: 7, winMin: 25, winMax: 50, loseMin: 6, loseMax: 18, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0, winRate: 50,  } },
+  kecil:   { d: '<b>Kecil:</b> Rp3,5 M dibagi 30 trade. Seperti trading nyata: menang hanya sekitar 40–45%, sering kalah beruntun, tapi tiap kemenangan lebih besar dari kekalahan, jadi akhirnya capai target (±Rp375–465 jt).',
+             v: { totalAmount: 3500000000, totalTrades: 30, winRate: 42, winMin: 10, winMax: 32, loseMin: 4, loseMax: 12, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0,  } },
+  sedang:  { d: '<b>Sedang:</b> Rp2,8 M dibagi 22 trade. Menang sekitar 40–45%, ada kalah beruntun, kemenangan lebih besar dari kekalahan, akhirnya capai target (±Rp375–465 jt).',
+             v: { totalAmount: 2800000000, totalTrades: 22, winRate: 42, winMin: 12, winMax: 36, loseMin: 5, loseMax: 14, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0,  } },
+  besar:   { d: '<b>Besar:</b> Rp2,4 M dibagi 18 trade besar. Menang sekitar 40%, kalah beruntun bisa cukup dalam, tapi sekali menang besar menutup banyak kerugian. Akhirnya capai target (±Rp375–465 jt).',
+             v: { totalAmount: 2400000000, totalTrades: 18, winRate: 40, winMin: 14, winMax: 40, loseMin: 6, loseMax: 16, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0,  } },
+  agresif: { d: '<b>Agresif:</b> hanya 7 trade, total beli Rp2 M. Menang sekitar 40%, minus bisa dalam (8–20%), tapi menang bisa sangat besar (28–52%). Akhirnya capai target (±Rp375–465 jt).',
+             v: { totalAmount: 2000000000, totalTrades: 7, winRate: 40, winMin: 28, winMax: 52, loseMin: 8, loseMax: 20, winVolMin: 1000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', maxTradesT: 4, tradeMode: 'total', ensure: 'target', minTrades: 0,  } },
 };
 function usePreset(k) {
   const pr = PRESETS[k]; Object.keys(pr.v).forEach(id => $(id).value = pr.v[id]);
