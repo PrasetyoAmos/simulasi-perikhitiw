@@ -171,6 +171,86 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
 .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
 .tag.w{background:#34c78a26;color:var(--win)}.tag.l{background:#ef6a6a26;color:var(--lose)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== unduh ===== */
+.dl-dlg{width:min(560px,94vw)}.dlb{padding:6px 20px 18px}.dls{padding:12px 0;border-bottom:1px solid var(--line)}.dls:last-of-type{border-bottom:0}
+.dlt{font-weight:700;font-size:13.5px;margin-bottom:6px}.dlt small{font-weight:500;margin-left:6px}.dlt a{color:var(--g700,#1a6b3c);text-decoration:none}.dlt a:hover{text-decoration:underline}
+.ck{display:flex;align-items:baseline;gap:9px;margin:4px 0;font-size:14px;color:var(--txt,#e8edf7);cursor:pointer}.ck small{color:var(--mut);font-size:12px}
+.ck input{width:auto;accent-color:#1a6b3c;margin:0;transform:translateY(2px)}
+.dlf{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px}.dlf .note{margin:0}
+@media(max-width:1750px){.brand small{display:none}.appbar button{padding:8px 13px}}
+/* ===== TEMA HIJAU (terang, minimalis) ===== */
+:root{
+  --bg:#edf1ee;--panel:#ffffff;--panel2:#f3f7f4;--line:#e3e9e5;--txt:#14231b;--mut:#6a7a71;
+  --win:#1f9d57;--lose:#e0524b;--gk:#14532d;--tax:#3fae6e;--cfx:#a9dcc1;--accent:#1a6b3c;--amber:#d9961b;
+  --g900:#0d3b22;--g800:#14532d;--g700:#1a6b3c;--g100:#e3f2e9;--r:20px;--sh:0 1px 2px rgba(20,60,38,.04),0 6px 20px rgba(20,60,38,.06);
+}
+body{background:var(--bg);font-family:"Inter","Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:-.005em}
+.appbar{margin:12px 18px 0;border:1px solid var(--line);border-radius:18px;background:#ffffffee;box-shadow:var(--sh);padding:9px 14px 11px;top:10px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--txt)}
+.brand::before{content:"";width:30px;height:30px;border-radius:50%;flex:none;background:radial-gradient(circle at 50% 50%,#fff 0 22%,transparent 23%),conic-gradient(from 210deg,var(--g800),#3fae6e,var(--g800))}
+.brand small{color:var(--mut)}
+.tline{left:14px;right:14px;bottom:3px;border-radius:99px;overflow:hidden}
+.tline>div{background:linear-gradient(90deg,#3fae6e,var(--g800))}
+button{background:var(--g800);color:#fff;border-radius:999px;padding:9px 16px}
+button.sec{background:#fff;color:var(--txt);border:1px solid #d3ddd7}
+button:hover{filter:none;background:var(--g700);color:#fff}button.sec:hover{background:var(--g100);color:var(--g800)}
+button:focus-visible{outline:2px solid var(--g700)}
+.presets button{padding:7px 13px}.presets button.on{background:var(--g800);color:#fff;border-color:var(--g800)}
+input,select{background:#fff;border:1px solid #d3ddd7;border-radius:12px;color:var(--txt)}
+input:focus,select:focus{outline:2px solid #3fae6e}
+.card,aside details,.kpi{border:0;box-shadow:var(--sh);border-radius:var(--r)}
+.card{padding:20px 22px}
+.card h2{font-size:14px;letter-spacing:0;text-transform:none;color:var(--txt);font-weight:700}
+aside details summary{font-size:13px;letter-spacing:0;text-transform:none;color:var(--txt)}
+.wrap{padding-top:16px}
+aside{background:transparent}
+.q{background:#fff;border:1px solid #cfdad3;color:var(--g700)}
+.q:hover,.q:focus,.q.open{background:var(--g800);color:#fff}
+.q:hover::after,.q:focus::after,.q.open::after{background:var(--g900);color:#fff;border-color:var(--g900);box-shadow:0 10px 30px rgba(10,40,25,.25)}
+.how-dlg{border:0;border-radius:24px;box-shadow:0 30px 80px rgba(10,40,25,.35)}
+.how-dlg::backdrop{background:rgba(13,59,34,.35)}
+.intro h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.tkbox{border-left:0;position:relative;overflow:hidden}
+.tkbox::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--line)}
+.tkbox.w::before{background:var(--win)}.tkbox.l::before{background:var(--lose)}
+.tk .ln .ic.j,.kpi .sd .tg.j{color:var(--amber)}
+.bar{height:12px;background:repeating-linear-gradient(135deg,#d4e1d9 0 4px,#e8f0eb 4px 8px)}
+.bar>div{background:linear-gradient(90deg,#3fae6e,var(--g800))}
+.kgroup{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut);font-weight:700}
+.kpi{padding:16px 18px;position:relative}
+.kpi.gk,.kpi.tax,.kpi.cfx{border-top:0}
+.kpi.gk::after,.kpi.tax::after,.kpi.cfx::after{content:"";position:absolute;left:18px;top:0;width:38px;height:4px;border-radius:0 0 4px 4px}
+.kpi.gk::after{background:var(--gk)}.kpi.tax::after{background:var(--tax)}.kpi.cfx::after{background:var(--cfx)}
+.kpi .v{font-size:23px;font-weight:800;letter-spacing:-.02em}
+.kpis .kgroup:first-child+.kpi{background:linear-gradient(150deg,var(--g700),var(--g900));color:#fff}
+.kpis .kgroup:first-child+.kpi .l,.kpis .kgroup:first-child+.kpi .s{color:#cfe9da}
+.kpis .kgroup:first-child+.kpi .v{color:#fff;font-size:28px}
+.kpis .kgroup:first-child+.kpi .v .pos,.kpis .kgroup:first-child+.kpi .v .neg{color:#fff}
+.kpis .kgroup:first-child+.kpi .q{background:#ffffff26;border-color:#ffffff55;color:#fff}
+.kpi .sd{border-top:1px solid var(--line)}
+.bp{background:var(--panel2);border:0;border-radius:16px}
+.vbars i{background:var(--g800);opacity:.8}.vbars i.now{background:var(--win);opacity:1}.vbars i.warn{background:var(--amber)}.vbars i.bad{background:var(--lose)}
+svg text{fill:#6a7a71}
+.tbl{border:0;border-radius:14px;background:#fff}
+table.data th,table.data td{border-left:1px solid #edf1ee}
+table.data th{background:#f3f7f4;color:#5a6b62}
+table.data tr.grp th{color:var(--txt);border-bottom:1px solid #cfdad3}
+table.data tr.cols th{border-bottom:2px solid #cfdad3}
+table.data .gs{border-left:2px solid #cfdad3!important}
+table.data tr.grp th.g-trade{background:#e8efe9}table.data tr.grp th.g-fee{background:#e0f0e6}
+table.data tr.grp th.g-mm{background:#d5ebdd}table.data tr.grp th.g-cp{background:#f3ece0}
+table.data .c-gk{background:#14532d0a}table.data .c-tax{background:#3fae6e0d}table.data .c-cfx{background:#a9dcc12e}
+table.data th.c-gk{background:#dcebe1}table.data th.c-tax{background:#e2f3e8}table.data th.c-cfx{background:#eaf6ef}
+table.data tbody tr.alt td{background-image:linear-gradient(#14532d06,#14532d06)}
+table.data tbody tr.tr.open td{background-image:linear-gradient(#3fae6e22,#3fae6e22)}
+table.data tbody tr:hover td,table.data tbody tr.tr:hover td{background-image:linear-gradient(#3fae6e18,#3fae6e18)}
+table.data tr.det td{background:#f6faf7}
+@keyframes rowin{from{background-color:#3fae6e55}to{background-color:transparent}}
+.tag.w{background:#1f9d5726}.tag.l{background:#e0524b22}
+table.plain td{border-bottom:1px solid #edf1ee}
+.note{color:var(--mut)}
+@media(max-width:980px){aside{background:var(--bg);border-right:0;box-shadow:0 0 40px rgba(10,40,25,.25)}body.menu-open .backdrop{background:#0d3b2266}.appbar{margin:8px}}
 </style>
 </head>
 <body>
@@ -185,6 +265,7 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
     <select id="speed"><option value="1" selected>Pelan</option><option value="3">Sedang</option><option value="8">Cepat</option><option value="20">Sangat cepat</option></select>
   </div>
   <span class="stat" id="stat"></span>
+  <button class="sec" id="dlBtn" title="Unduh data simulasi">⬇ Unduh</button>
   <button class="sec" id="fs" title="Layar penuh (tombol F)">⛶ Layar penuh</button>
   <div class="tline"><div id="tl"></div></div>
 </div>
@@ -266,7 +347,7 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
     <label>Fee CFX per sisi (%)<span class="q" title="Dibayar ke CFX, pembeli dan penjual.">?</span></label><input id="cfx" type="number" step="0.00001" value="0.00555">
     <p class="note">Tarif disalin dari draft Excel dan belum diverifikasi sebagai tarif berlaku.</p>
   </details>
-  <div class="card"><button class="sec" id="csv" style="width:100%">Unduh rincian trade (CSV)</button></div>
+  <div class="card"><button class="sec" id="csv" style="width:100%">⬇ Unduh data…</button></div>
 </div></aside>
 
 <main>
@@ -276,6 +357,29 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
       <p>🎲 Simulasi acak, bukan data asli · maks 4 trade/hari · tidak selalu menang · 🤝 counterparty dicatat terpisah.</p>
     </div>
     <button class="sec" id="howBtn" type="button">❓ Cara membaca (30 detik)</button>
+    <dialog id="dlDlg" class="how-dlg dl-dlg">
+  <div class="hd"><b>⬇ Unduh data simulasi</b><button type="button" id="dlX" aria-label="Tutup">✕</button></div>
+  <div class="dlb">
+    <div class="dls"><div class="dlt">1 · Skenario <small><a href="#" id="dlAll">pilih semua</a> · <a href="#" id="dlNone">kosongkan</a></small></div>
+      <label class="ck"><input type="checkbox" name="sc" value="cur" checked> Pengaturan saat ini <small>(pola jadi atau custom, sesuai panel kiri)</small></label>
+      <label class="ck"><input type="checkbox" name="sc" value="vino"> Mas Vino</label>
+      <label class="ck"><input type="checkbox" name="sc" value="kecil"> Kecil</label>
+      <label class="ck"><input type="checkbox" name="sc" value="sedang"> Sedang</label>
+      <label class="ck"><input type="checkbox" name="sc" value="besar"> Besar</label>
+      <label class="ck"><input type="checkbox" name="sc" value="agresif"> Agresif</label>
+      <p class="note">Pola jadi dihitung dengan kode acak, modal, dan tarif yang sedang dipakai di panel kiri.</p></div>
+    <div class="dls"><div class="dlt">2 · Isi file</div>
+      <label class="ck"><input type="checkbox" name="ct" value="sum" checked> Ringkasan <small>(1 baris per skenario: laba, fee, pajak, volume)</small></label>
+      <label class="ck"><input type="checkbox" name="ct" value="trd" checked> Rincian tiap trade</label>
+      <label class="ck"><input type="checkbox" name="ct" value="day"> Volume harian di GK <small>(+ rasio vs rata-rata 30 hari)</small></label></div>
+    <div class="dls"><div class="dlt">3 · Format</div>
+      <label class="ck"><input type="radio" name="fm" value="xlsx" checked> Excel (.xlsx) <small>(satu workbook, tiap isi dan skenario jadi sheet sendiri)</small></label>
+      <label class="ck"><input type="radio" name="fm" value="zip"> ZIP <small>(satu file CSV per isi dan skenario)</small></label>
+      <label class="ck"><input type="radio" name="fm" value="csv"> Satu file CSV gabungan <small>(per isi, ada kolom skenario)</small></label>
+      <label class="ck"><input type="radio" name="fm" value="json"> JSON <small>(semua dalam satu file)</small></label></div>
+    <div class="dlf"><span id="dlMsg" class="note"></span><button type="button" id="dlGo">⬇ Unduh</button></div>
+  </div>
+</dialog>
     <dialog id="howDlg" class="how-dlg">
       <div class="hd"><b>❓ Cara membaca dashboard</b><button type="button" id="howX" aria-label="Tutup">✕</button></div>
       <ol>
@@ -300,7 +404,7 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
 
   <div class="grid2">
     <div class="card"><h2>Laba bersih MM5 dari waktu ke waktu</h2><div id="chartCum"></div>
-      <div class="legend"><span><i style="background:#5b9cf5"></i>Laba kumulatif</span><span><i style="background:#f0b34a"></i>Target (garis putus-putus)</span></div></div>
+      <div class="legend"><span><i style="background:#1a6b3c"></i>Laba kumulatif</span><span><i style="background:#d9961b"></i>Target (garis putus-putus)</span></div></div>
     <div class="card"><h2>Pendapatan exchange per hari (setara Rp)</h2><div id="chartInc"></div>
       <div class="legend"><span><i style="background:var(--gk)"></i>Fee GK (pendapatan exchange, setara Rp)</span><span><i style="background:var(--tax)"></i>Pajak (titipan negara)</span><span><i style="background:var(--cfx)"></i>Fee CFX</span></div></div>
   </div>
@@ -427,23 +531,23 @@ function lineChart(el, pts, target, days, dom) {
   const y0 = dom[0], y1 = dom[1];
   const X = d => L + (W-L-R) * d / days, Y = v => T + (H-T-B) * (1 - (v - y0)/(y1 - y0));
   let g = '';
-  niceTicks(y0, y1).forEach(t => g += `<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#2a3550"/><text x="${L-6}" y="${Y(t)+4}" text-anchor="end">${rpS(t)}</text>`);
+  niceTicks(y0, y1).forEach(t => g += `<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#e3e9e5"/><text x="${L-6}" y="${Y(t)+4}" text-anchor="end">${rpS(t)}</text>`);
   for (let d = 0; d <= days; d += Math.max(1, Math.ceil(days/10))) g += `<text x="${X(d)}" y="${H-8}" text-anchor="middle">hari ${d}</text>`;
-  g += `<line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="#4a5778"/>`;
-  g += `<line x1="${L}" x2="${W-R}" y1="${Y(target)}" y2="${Y(target)}" stroke="#f0b34a" stroke-dasharray="6 4"/><text x="${W-R}" y="${Y(target)-5}" text-anchor="end" style="fill:#f0b34a">target ${rpS(target)}</text>`;
-  g += `<polyline fill="none" stroke="#5b9cf5" stroke-width="2.4" stroke-linejoin="round" points="${pts.map(p => X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"/>`;
+  g += `<line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="#c3cec8"/>`;
+  g += `<line x1="${L}" x2="${W-R}" y1="${Y(target)}" y2="${Y(target)}" stroke="#d9961b" stroke-dasharray="6 4"/><text x="${W-R}" y="${Y(target)-5}" text-anchor="end" style="fill:#d9961b">target ${rpS(target)}</text>`;
+  g += `<polyline fill="none" stroke="#1a6b3c" stroke-width="2.4" stroke-linejoin="round" points="${pts.map(p => X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"/>`;
   const last = pts[pts.length-1];
-  g += `<circle class="pulse" cx="${X(last[0])}" cy="${Y(last[1])}" r="4" fill="#5b9cf5"/><circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4.5" fill="#5b9cf5"/>`;
+  g += `<circle class="pulse" cx="${X(last[0])}" cy="${Y(last[1])}" r="4" fill="#1a6b3c"/><circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4.5" fill="#1a6b3c"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Laba kumulatif MM5">${g}</svg>`;
 }
 function stackChart(el, days, max) {
   const W = 640, H = 270, L = 62, R = 14, T = 12, B = 28;
   const bw = (W-L-R) / days.length, Y = v => T + (H-T-B) * (1 - v/max);
   let g = '';
-  niceTicks(0, max).forEach(t => g += `<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#2a3550"/><text x="${L-6}" y="${Y(t)+4}" text-anchor="end">${rpS(t)}</text>`);
+  niceTicks(0, max).forEach(t => g += `<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#e3e9e5"/><text x="${L-6}" y="${Y(t)+4}" text-anchor="end">${rpS(t)}</text>`);
   days.forEach((d, i) => {
     let base = 0; const x = L + i*bw + bw*0.12, w = bw*0.76;
-    [['gk','#5b9cf5','Fee GK'],['tax','#f0b34a','Pajak'],['cfx','#b48cf2','Fee CFX']].forEach(([k,c,nm]) => {
+    [['gk','#14532d','Fee GK'],['tax','#3fae6e','Pajak'],['cfx','#a9dcc1','Fee CFX']].forEach(([k,c,nm]) => {
       const h = Y(base) - Y(base + d[k]); g += `<rect x="${x.toFixed(1)}" y="${Y(base+d[k]).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" fill="${c}"><title>Hari ${d.day} · ${nm}: ${rp(d[k])}</title></rect>`; base += d[k];
     });
     if (days.length <= 31 || i % Math.ceil(days.length/15) === 0) g += `<text x="${L + i*bw + bw/2}" y="${H-8}" text-anchor="middle">${d.day}</text>`;
@@ -459,7 +563,7 @@ function histChart(el, finals, target) {
   cnt.forEach((c,i) => { const h = (H-T-B)*c/mx, mid = lo + span*(i+.5)/bins;
     g += `<rect x="${L+i*bw+1}" y="${H-B-h}" width="${bw-2}" height="${h}" fill="${mid>=0?'#34c78a':'#ef6a6a'}" opacity=".8"><title>${c} dari ${finals.length} simulasi berakhir di sekitar ${rp(mid)}</title></rect>`; });
   g += `<line x1="${X(0)}" x2="${X(0)}" y1="${T}" y2="${H-B}" stroke="#8f9bb5"/><text x="${X(0)}" y="${H-8}" text-anchor="middle">0</text>`;
-  g += `<line x1="${X(target)}" x2="${X(target)}" y1="${T}" y2="${H-B}" stroke="#f0b34a" stroke-dasharray="6 4"/><text x="${X(target)}" y="${H-8}" text-anchor="middle" style="fill:#f0b34a">target</text>`;
+  g += `<line x1="${X(target)}" x2="${X(target)}" y1="${T}" y2="${H-B}" stroke="#d9961b" stroke-dasharray="6 4"/><text x="${X(target)}" y="${H-8}" text-anchor="middle" style="fill:#d9961b">target</text>`;
   g += `<text x="${W-R}" y="${H-8}" text-anchor="end">${rpS(hi)}</text>`;
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Sebaran laba akhir">${g}</svg>`;
 }
@@ -467,9 +571,12 @@ function histChart(el, finals, target) {
 /* ---------- state & hitung awal ---------- */
 let last = null, PRE = null, DOM = null, X = null, MAXINC = 1, ANIM = { k: 0, timer: null }, ROWS = 0;
 
+function simFor(p) {
+  return p.ensure === 'none' ? Sim.simulate(p, p.seed) : Sim.simulateEnding(p, p.seed, p.ensure === 'target' ? p.target : 1, 3000, p.ensure === 'target' ? p.target * 1.25 : null, r => { const n = r.trades.length; return n < 4 || Math.abs(r.trades.filter(x => x.win).length / n - p.winRate) <= 0.08; });
+}
 function prepare() {
   const p = params();
-  const s = p.ensure === 'none' ? Sim.simulate(p, p.seed) : Sim.simulateEnding(p, p.seed, p.ensure === 'target' ? p.target : 1, 3000, p.ensure === 'target' ? p.target * 1.25 : null, r => { const n = r.trades.length; return n < 4 || Math.abs(r.trades.filter(x => x.win).length / n - p.winRate) <= 0.08; });
+  const s = simFor(p);
   last = { p, s };
   // posisi x tiap trade (hari ke-n, pecahan sesuai urutan dalam hari)
   const perDay = {}; s.trades.forEach(t => perDay[t.day] = (perDay[t.day] || 0) + 1);
@@ -667,14 +774,109 @@ function play(fromStart) {
 }
 function rerun() { prepare(); play(true); }
 
-function csv() {
-  if (!last) return;
-  const h = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total_setara_rp','fee_gk_koin','fee_gk_rp','pajak_total','fee_cfx_total_setara_rp','fee_cfx_koin','fee_cfx_rp','laba_mm5','kumulatif_mm5','hasil_counterparty','cp_fee_gk','cp_pajak','cp_fee_cfx','kas_mm5'];
-  const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.E.toFixed(6),x.buy.toFixed(2),x.Enet.toFixed(6),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.gkCoin.toFixed(6),x.ex.gkRp.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.ex.cfxCoin.toFixed(6),x.ex.cfxRp.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),(x.cp.sellGK+x.cp.buyGK).toFixed(2),x.cp.sellTax.toFixed(2),(x.cp.sellCFX+x.cp.buyCFX).toFixed(2),x.cash.toFixed(2)].join(',')));
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
-  a.download = 'simulasi-mm5.csv'; a.click(); URL.revokeObjectURL(a.href);
+/* ---------- unduh data ---------- */
+const SCN = { cur: 'Pengaturan saat ini', vino: 'Mas Vino', kecil: 'Kecil', sedang: 'Sedang', besar: 'Besar', agresif: 'Agresif' };
+function runScenario(key) {
+  if (key === 'cur') { const p = params(); return { p, s: (last && last.p && JSON.stringify(last.p) === JSON.stringify(p)) ? last.s : simFor(p) }; }
+  const snap = {}; IDS.forEach(i => snap[i] = $(i).value);
+  try {
+    const pr = PRESETS[key]; Object.keys(pr.v).forEach(id => $(id).value = pr.v[id]);
+    $('buyPrice').value = 205000; $('ensure').value = pr.v.ensure || 'none'; $('tradeMode').value = pr.v.tradeMode || 'random';
+    const p = params(); return { p, s: simFor(p) };
+  } finally { IDS.forEach(i => $(i).value = snap[i]); }
 }
+function volDaily(p, s) {
+  const B = Math.max(1, parseFloat($('volBase').value) || 1e9);
+  const dv = Array.from({ length: p.days }, () => 0), db = dv.slice(), dj = dv.slice(), dn = dv.slice();
+  s.trades.forEach(t => { dv[t.day-1] += t.vol + t.gross; db[t.day-1] += t.vol; dj[t.day-1] += t.gross; dn[t.day-1]++; });
+  const ratio = dv.map((v, i) => { let sum = 0, c = 0; for (let j = Math.max(0, i - 30); j < i; j++) { sum += B + dv[j]; c++; } return (B + v) / (c ? sum / c : B); });
+  return { dv, db, dj, dn, ratio };
+}
+const f2 = v => (+v).toFixed(2), f6 = v => (+v).toFixed(6);
+const TRD_H = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total_setara_rp','fee_gk_koin','fee_gk_rp','pajak_total','fee_cfx_total_setara_rp','fee_cfx_koin','fee_cfx_rp','laba_mm5','kumulatif_mm5','hasil_counterparty','cp_fee_gk','cp_pajak','cp_fee_cfx','kas_mm5'];
+const trdRow = x => [x.day,x.no,f2(x.vol),f6(x.E),f2(x.buy),f6(x.Enet),f2(x.sell),x.win?'menang':'kalah',f2(x.gross),f2(x.ex.gk),f6(x.ex.gkCoin),f2(x.ex.gkRp),f2(x.ex.tax),f2(x.ex.cfx),f6(x.ex.cfxCoin),f2(x.ex.cfxRp),f2(x.mm.pnl),f2(x.cum),f2(x.cp.pnl),f2(x.cp.sellGK+x.cp.buyGK),f2(x.cp.sellTax),f2(x.cp.sellCFX+x.cp.buyCFX),f2(x.cash)];
+const SUM_H = ['skenario','modal','target','hari','trade','menang','kalah','total_beli','total_jual','volume_total_gk','laba_bersih_mm5','kas_akhir_mm5','hasil_counterparty','fee_gk_total_setara_rp','fee_gk_koin','fee_gk_rp','pajak_total','fee_cfx_total_setara_rp','fee_cfx_koin','fee_cfx_rp','volume_harian_maks','rasio_anomali_maks','batas_anomali'];
+function sumRow(name, r) {
+  const { p, s } = r, t = s.trades, sm = f => t.reduce((a, x) => a + f(x), 0), vd = volDaily(p, s), LIM = Math.max(1, parseFloat($('volLimit').value) || 5);
+  const buy = sm(x => x.vol), sell = sm(x => x.gross);
+  return [name, p.capital, p.target, p.days, t.length, t.filter(x => x.win).length, t.filter(x => !x.win).length, f2(buy), f2(sell), f2(buy + sell), f2(t.length ? t[t.length-1].cum : 0), f2(t.length ? t[t.length-1].cash : p.capital), f2(sm(x => x.cp.pnl)),
+    f2(sm(x => x.ex.gk)), f6(sm(x => x.ex.gkCoin)), f2(sm(x => x.ex.gkRp)), f2(sm(x => x.ex.tax)), f2(sm(x => x.ex.cfx)), f6(sm(x => x.ex.cfxCoin)), f2(sm(x => x.ex.cfxRp)), f2(Math.max(0, ...vd.dv)), Math.max(...vd.ratio).toFixed(3), LIM];
+}
+const DAY_H = ['hari','trade','volume_beli','volume_jual','volume_total','rasio_vs_rata30'];
+const dayRows = (p, s) => { const v = volDaily(p, s); return v.dv.map((x, i) => [i+1, v.dn[i], f2(v.db[i]), f2(v.dj[i]), f2(x), v.ratio[i].toFixed(3)]); };
+const toCsv = (h, rows) => [h.join(',')].concat(rows.map(r => r.join(','))).join('\n');
+function crc32(u) { let c, crc = -1; if (!crc32.t) { crc32.t = []; for (let n = 0; n < 256; n++) { c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; crc32.t[n] = c; } } for (let i = 0; i < u.length; i++) crc = (crc >>> 8) ^ crc32.t[(crc ^ u[i]) & 255]; return (crc ^ -1) >>> 0; }
+function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  const w16 = (a, v) => a.push(v & 255, v >> 8 & 255), w32 = (a, v) => a.push(v & 255, v >> 8 & 255, v >> 16 & 255, v >>> 24 & 255);
+  files.forEach(f => {
+    const nm = enc.encode(f.name), data = enc.encode((f.raw ? '' : '\ufeff') + f.data), crc = crc32(data), h = [];
+    w32(h, 0x04034b50); w16(h, 20); w16(h, 0x0800); w16(h, 0); w16(h, 0); w16(h, 0x21); w32(h, crc); w32(h, data.length); w32(h, data.length); w16(h, nm.length); w16(h, 0);
+    parts.push(new Uint8Array(h), nm, data);
+    const c = []; w32(c, 0x02014b50); w16(c, 20); w16(c, 20); w16(c, 0x0800); w16(c, 0); w16(c, 0); w16(c, 0x21); w32(c, crc); w32(c, data.length); w32(c, data.length); w16(c, nm.length); w16(c, 0); w16(c, 0); w16(c, 0); w16(c, 0); w32(c, 0); w32(c, off);
+    cen.push(new Uint8Array(c), nm); off += h.length + nm.length + data.length;
+  });
+  const csz = cen.reduce((a, x) => a + x.length, 0), e = []; w32(e, 0x06054b50); w16(e, 0); w16(e, 0); w16(e, files.length); w16(e, files.length); w32(e, csz); w32(e, off); w16(e, 0);
+  return new Blob(parts.concat(cen, [new Uint8Array(e)]), { type: 'application/zip' });
+}
+function buildXlsx(sheets) {
+  const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const col = n => { let r = ''; n++; while (n > 0) { const m = (n - 1) % 26; r = String.fromCharCode(65 + m) + r; n = Math.floor((n - 1) / 26); } return r; };
+  const names = [], used = new Set();
+  const nm = raw => { let b = raw.replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31), n = b, i = 2; while (used.has(n.toLowerCase())) n = b.slice(0, 28) + ' ' + i++; used.add(n.toLowerCase()); return n; };
+  const H = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const files = [{ raw: 1, name: '[Content_Types].xml', data: H + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' + sheets.map((x, i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '</Types>' },
+    { raw: 1, name: '_rels/.rels', data: H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { raw: 1, name: 'xl/styles.xml', data: H + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00####"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF14532D"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>' }];
+  sheets.forEach((sh, si) => {
+    names.push(nm(sh.name));
+    const cell = (v, r, c, hd) => { const ref = col(c) + r;
+      if (!hd && /^-?\d+(\.\d+)?$/.test(String(v))) return `<c r="${ref}" s="2"><v>${v}</v></c>`;
+      return `<c r="${ref}"${hd ? ' s="1"' : ''} t="inlineStr"><is><t>${esc(v)}</t></is></c>`; };
+    const rows = [`<row r="1" ht="30" customHeight="1">${sh.header.map((h, c) => cell(h, 1, c, true)).join('')}</row>`].concat(sh.rows.map((r, i) => `<row r="${i + 2}">${r.map((v, c) => cell(v, i + 2, c)).join('')}</row>`));
+    const w = sh.header.map((h, c) => `<col min="${c+1}" max="${c+1}" width="${Math.max(12, Math.min(26, h.length + 4))}" customWidth="1"/>`).join('');
+    files.push({ raw: 1, name: `xl/worksheets/sheet${si + 1}.xml`, data: H + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${w}</cols><sheetData>${rows.join('')}</sheetData></worksheet>` });
+  });
+  files.push({ raw: 1, name: 'xl/workbook.xml', data: H + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + names.map((n, i) => `<sheet name="${esc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>' });
+  files.push({ raw: 1, name: 'xl/_rels/workbook.xml.rels', data: H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + sheets.map((x, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') + `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` });
+  return new Blob([makeZip(files)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+function saveBlob(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+function downloadData() {
+  const sc = [...document.querySelectorAll('input[name=sc]:checked')].map(e => e.value), ct = [...document.querySelectorAll('input[name=ct]:checked')].map(e => e.value), fm = document.querySelector('input[name=fm]:checked').value;
+  const msg = $('dlMsg');
+  if (!sc.length) { msg.textContent = 'Pilih minimal satu skenario.'; return; }
+  if (!ct.length) { msg.textContent = 'Pilih minimal satu isi file.'; return; }
+  const R = sc.map(k => ({ k, name: SCN[k], r: runScenario(k) })), stamp = new Date().toISOString().slice(0, 10), files = [];
+  const slug = k => k === 'cur' ? 'saat-ini' : k;
+  if (fm === 'xlsx') {
+    const sh = [];
+    if (ct.includes('sum')) sh.push({ name: 'Ringkasan', header: SUM_H, rows: R.map(x => sumRow(x.name, x.r)) });
+    R.forEach(x => { if (ct.includes('trd')) sh.push({ name: 'Trade ' + x.name, header: TRD_H, rows: x.r.s.trades.map(trdRow) }); if (ct.includes('day')) sh.push({ name: 'Volume ' + x.name, header: DAY_H, rows: dayRows(x.r.p, x.r.s) }); });
+    saveBlob(buildXlsx(sh), `simulasi-mm5-${stamp}.xlsx`); msg.textContent = `Terunduh: Excel dengan ${sh.length} sheet.`; return;
+  }
+  if (fm === 'json') {
+    const o = { dibuat: new Date().toISOString(), skenario: R.map(x => ({ nama: x.name, ringkasan: ct.includes('sum') ? Object.fromEntries(SUM_H.map((h, i) => [h, sumRow(x.name, x.r)[i]])) : undefined,
+      trade: ct.includes('trd') ? x.r.s.trades.map(t => Object.fromEntries(TRD_H.map((h, i) => [h, trdRow(t)[i]]))) : undefined,
+      volume_harian: ct.includes('day') ? dayRows(x.r.p, x.r.s).map(r => Object.fromEntries(DAY_H.map((h, i) => [h, r[i]]))) : undefined })) };
+    saveBlob(new Blob([JSON.stringify(o, null, 1)], { type: 'application/json' }), `simulasi-mm5-${stamp}.json`); msg.textContent = 'Terunduh: 1 file JSON.'; return;
+  }
+  if (fm === 'csv') {
+    if (ct.includes('sum')) files.push({ name: `ringkasan-${stamp}.csv`, data: toCsv(SUM_H, R.map(x => sumRow(x.name, x.r))) });
+    if (ct.includes('trd')) files.push({ name: `rincian-trade-${stamp}.csv`, data: toCsv(['skenario'].concat(TRD_H), R.flatMap(x => x.r.s.trades.map(t => [x.name].concat(trdRow(t))))) });
+    if (ct.includes('day')) files.push({ name: `volume-harian-${stamp}.csv`, data: toCsv(['skenario'].concat(DAY_H), R.flatMap(x => dayRows(x.r.p, x.r.s).map(r => [x.name].concat(r)))) });
+    files.forEach((f, i) => setTimeout(() => saveBlob(new Blob(['﻿' + f.data], { type: 'text/csv;charset=utf-8' }), f.name), i * 250));
+    msg.textContent = `Terunduh: ${files.length} file CSV.`; return;
+  }
+  if (ct.includes('sum')) files.push({ name: `ringkasan.csv`, data: toCsv(SUM_H, R.map(x => sumRow(x.name, x.r))) });
+  R.forEach(x => { if (ct.includes('trd')) files.push({ name: `rincian-trade-${slug(x.k)}.csv`, data: toCsv(TRD_H, x.r.s.trades.map(trdRow)) }); if (ct.includes('day')) files.push({ name: `volume-harian-${slug(x.k)}.csv`, data: toCsv(DAY_H, dayRows(x.r.p, x.r.s)) }); });
+  saveBlob(makeZip(files), `simulasi-mm5-${stamp}.zip`); msg.textContent = `Terunduh: ZIP berisi ${files.length} file.`;
+}
+(function () { const d = $('dlDlg'), open = () => { $('dlMsg').textContent = ''; d.showModal(); };
+  $('csv').onclick = open; $('dlBtn').onclick = open; $('dlX').onclick = () => d.close(); $('dlGo').onclick = downloadData;
+  d.addEventListener('click', e => { if (e.target === d) d.close(); });
+  $('dlAll').onclick = e => { e.preventDefault(); document.querySelectorAll('input[name=sc]').forEach(c => c.checked = true); };
+  $('dlNone').onclick = e => { e.preventDefault(); document.querySelectorAll('input[name=sc]').forEach(c => c.checked = false); }; })();
 
 function syncMode() { const t = $('tradeMode').value === 'total'; $('modeTotal').style.display = t ? '' : 'none'; $('modeRandom').style.display = t ? 'none' : ''; }
 $('tradeMode').addEventListener('change', syncMode);
@@ -687,7 +889,6 @@ $('skip').onclick = () => { stop(); $('pause').textContent = '⏸ Jeda'; ANIM.k 
 $('speed').onchange = () => { if (ANIM.timer) play(false); };
 $('reroll').onclick = () => { $('seed').value = Math.floor(Math.random() * 1e9); rerun(); };
 $('reset').onclick = () => { usePreset('sedang'); $('winVolMin').value = 10000000; };
-$('csv').onclick = csv;
 function setP(o) { Object.keys(o).forEach(k => $(k).value = o[k]); rerun(); }
 const PRESETS = {
   vino:    { d: '<b>Mas Vino:</b> trade menang besar (Rp200–325 jt) di harga jauh di atas rata-rata, trade kalah kecil. MM5 sering kalah, tapi saldo akhir untung. Berhenti trade saat target tercapai.',
