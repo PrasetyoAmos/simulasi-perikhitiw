@@ -132,6 +132,7 @@ tr.det{display:none}tr.open+tr.det{display:table-row}
 table.data tr.det td{padding:0;border-left:0;text-align:left;background:#0f1626;white-space:normal}
 .detbox{padding:12px 16px;position:sticky;left:0;max-width:min(100%,1100px)}
 .hint{color:var(--mut);font-size:12px;font-weight:400}
+table.data table.mini td small{display:block;color:var(--mut);font-size:11px}
 .detsum{margin-top:8px;font-size:12.5px;color:var(--mut)}
 table.data table.mini{width:auto;min-width:760px;margin-top:8px}
 table.data table.mini th,table.data table.mini td{position:static;padding:6px 12px;text-align:right;border-left:0;border-bottom:1px solid var(--line);background:none!important;background-image:none!important;box-shadow:none;height:auto;line-height:1.4;font-size:12.5px;color:var(--txt)}
@@ -538,22 +539,26 @@ function draw(k) {
   const nr = v => (v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('id-ID');
   const sg = v => (v < 0 ? 'neg' : 'pos');
   const detail = x => {
-    const m = x.mm, c = x.cp, netBuy = x.vol - m.buyGK - m.buyCFX, netSell = x.gross - m.sellGK - m.sellCFX;
-    const cpIn = x.vol - c.sellGK - c.sellTax - c.sellCFX, cpOut = x.gross + c.buyGK + c.buyCFX;
+    const m = x.mm, c = x.cp, cb = c.buyGK + c.buyCFX;
+    const netBuy = x.vol - m.buyGK - m.buyCFX, netSell = x.gross - m.sellGK - m.sellCFX;
+    const cpIn = x.vol - c.sellGK - c.sellTax - c.sellCFX;
     const priceEff = -x.E * (x.sell - x.buy), cpCost = c.sellGK + c.sellTax + c.sellCFX + c.buyGK + c.buyCFX;
-    const head = '<thead><tr><th>Step</th><th>Keterangan</th><th>Notional / Amount IDR</th><th>Rate per koin</th><th>Amount koin</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Net</th></tr></thead>';
+    // fee pembeli = dipotong dari koin (nilai Rp setara di samping); fee penjual & pajak = dari hasil jual (Rp)
+    const fc = (rpv, price) => `${kn(rpv / price)} koin<small>≈ Rp${nr(rpv)}</small>`;
+    const head = (last) => `<thead><tr><th>Step</th><th>Keterangan</th><th>Notional (Rp)</th><th>Rate per koin</th><th>Koin kotor</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Koin bersih</th><th>${last}</th></tr></thead>`;
+    const mmCoinNet = x.Enet, cpCoinNet = x.Enet - cb / x.sell;
     return `<tr class="det"><td colspan="16"><div class="detbox">
       <b>Sisi MM5</b> <span class="hint">(format Excel Mas Vino)</span>
-      <table class="mini">${head.replace('<th>Net</th>', '<th>Net (cara Excel)</th>')}<tbody>
-      <tr><td>1</td><td>MM5 membeli koin</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(m.buyGK)}</td><td>0</td><td>${nr(m.buyCFX)}</td><td>${nr(netBuy)}</td></tr>
-      <tr><td>2</td><td>MM5 menjual koin</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(m.sellGK)}</td><td>${nr(m.sellTax)}</td><td>${nr(m.sellCFX)}</td><td>${nr(netSell)}</td></tr></tbody></table>
-      <div class="detsum">Gain cara Excel (net jual − net beli): <b class="${sg(m.excelGain)}">${nr(m.excelGain)}</b> · Laba bersih setelah pajak jual: <b class="${sg(m.pnl)}">${nr(m.pnl)}</b> · Koin terpotong sebagai fee beli: ${kn(x.E - x.Enet)} koin</div>
+      <table class="mini">${head('Net (cara Excel, Rp)')}<tbody>
+      <tr><td>1</td><td>MM5 membeli koin</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${fc(m.buyGK, x.buy)}</td><td>0</td><td>${fc(m.buyCFX, x.buy)}</td><td>${kn(mmCoinNet)}</td><td>${nr(netBuy)}</td></tr>
+      <tr><td>2</td><td>MM5 menjual koin</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(m.sellGK)}</td><td>${nr(m.sellTax)}</td><td>${nr(m.sellCFX)}</td><td>0 (terjual semua)</td><td>${nr(netSell)}</td></tr></tbody></table>
+      <div class="detsum">Fee beli dipotong dari koin: ${kn(x.E)} − ${kn(x.E - x.Enet)} = ${kn(x.Enet)} koin yang bisa dijual. Fee jual dan pajak dipotong dari hasil penjualan (Rp). Gain cara Excel (net jual − net beli): <b class="${sg(m.excelGain)}">${nr(m.excelGain)}</b> · Laba bersih setelah pajak jual: <b class="${sg(m.pnl)}">${nr(m.pnl)}</b></div>
       <div style="margin-top:14px"><b>Sisi counterparty</b> <span class="hint">(pihak independen, lawan MM5, dicatat terpisah)</span></div>
-      <table class="mini">${head.replace('<th>Net</th>', '<th>Net kas</th>')}<tbody>
-      <tr><td>1</td><td>Counterparty menjual koin ke MM5</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(c.sellGK)}</td><td>${nr(c.sellTax)}</td><td>${nr(c.sellCFX)}</td><td class="pos">+${nr(cpIn)}</td></tr>
-      <tr><td>2</td><td>Counterparty membeli koin dari MM5</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(c.buyGK)}</td><td>0</td><td>${nr(c.buyCFX)}</td><td class="neg">−${nr(cpOut)}</td></tr></tbody></table>
-      <div class="detsum">Hasil counterparty: <b class="${sg(c.pnl)}">${nr(c.pnl)}</b> = selisih harga <span class="${sg(priceEff)}">${nr(priceEff)}</span> (koin dijual di harga beli, dibeli kembali di harga jual) − fee &amp; pajak ${nr(cpCost)}. Counterparty menyerahkan ${kn(x.E)} koin dan menerima kembali ${kn(x.Enet)} koin; selisih ${kn(x.E - x.Enet)} koin diambil sebagai fee beli MM5 (nilai fee ini dihitung di harga jual).</div>
-      <div class="detsum">Pendapatan exchange dari trade ini: fee GK ${nr(x.ex.gk)} · pajak ${nr(x.ex.tax)} · fee CFX ${nr(x.ex.cfx)} (dua sisi).</div>
+      <table class="mini">${head('Net kas (Rp)')}<tbody>
+      <tr><td>1</td><td>Counterparty menjual koin ke MM5</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(c.sellGK)}</td><td>${nr(c.sellTax)}</td><td>${nr(c.sellCFX)}</td><td>0 (diserahkan)</td><td class="pos">+${nr(cpIn)}</td></tr>
+      <tr><td>2</td><td>Counterparty membeli koin dari MM5</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${fc(c.buyGK, x.sell)}</td><td>0</td><td>${fc(c.buyCFX, x.sell)}</td><td>${kn(cpCoinNet)}</td><td class="neg">−${nr(x.gross)}</td></tr></tbody></table>
+      <div class="detsum">Hasil counterparty: <b class="${sg(c.pnl)}">${nr(c.pnl)}</b> = selisih harga <span class="${sg(priceEff)}">${nr(priceEff)}</span> (koin dijual di harga beli, dibeli kembali di harga jual) − fee &amp; pajak ${nr(cpCost)}. Fee saat membeli juga dipotong dari koin, nilainya dihitung di harga jual.</div>
+      <div class="detsum">Pendapatan exchange dari trade ini: fee GK ${nr(x.ex.gk)} · pajak ${nr(x.ex.tax)} · fee CFX ${nr(x.ex.cfx)} (dua sisi). Angka Rp untuk fee beli adalah nilai setara dari fee dalam koin.</div>
     </div></td></tr>`;
   };
   const rowHtml = (x, isNew, i) => `<tr class="tr ${isNew ? 'new' : ''} ${i % 2 ? 'alt' : ''}" title="Klik untuk melihat langkah beli dan jual"><td>${x.day}</td><td>${x.no}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(x.vol)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(x.gross)}</td><td class="${x.move>=0?'pos':'neg'}">${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%</td><td class="ctr"><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td class="gs c-gk">${nr(x.ex.gk)}</td><td class="c-tax">${nr(x.ex.tax)}</td><td class="c-cfx">${nr(x.ex.cfx)}</td><td class="gs ${sg(x.mm.pnl)}">${nr(x.mm.pnl)}</td><td class="${sg(x.cum)}">${nr(x.cum)}</td><td class="gs ${sg(x.cp.pnl)}">${nr(x.cp.pnl)}</td></tr>` + detail(x);
@@ -569,7 +574,7 @@ function draw(k) {
     tb.insertAdjacentHTML('beforeend', s.trades.slice(ROWS, shown).map((x, i, a) => rowHtml(x, i === a.length - 1 && !done, ROWS + i)).join(''));
     ROWS = shown; $('tblw').scrollTop = $('tblw').scrollHeight;
   }
-  $('tblNote').textContent = `Klik baris untuk melihat langkah beli dan jual, sisi MM5 dan sisi counterparty. Notional = nilai Rupiah transaksi (jumlah koin x harga). Koin dijual lebih sedikit dari koin dibeli karena fee beli dipotong dalam koin. Fee GK, Pajak, dan Fee CFX adalah total dua sisi (MM5 + counterparty).${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
+  $('tblNote').textContent = `Klik baris untuk melihat langkah beli dan jual, sisi MM5 dan sisi counterparty. Notional = nilai Rupiah transaksi (jumlah koin x harga). Koin dijual lebih sedikit dari koin dibeli karena fee beli dipotong dari koin (bukan Rupiah). Kolom Fee GK, Pajak, dan Fee CFX berisi nilai Rupiah (fee beli = nilai setara fee dalam koin), total dua sisi (MM5 + counterparty).${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
 }
 
 /* ---------- animasi ---------- */
