@@ -116,13 +116,13 @@
 
   /* Cari satu jalur simulasi yang berakhir >= minFinal (seed digeser berurutan).
    * Ini memilih contoh, bukan menghitung peluang. Peluang sebenarnya ada di monteCarlo. */
-  function simulateEnding(p, seed, minFinal, maxTries, maxFinal) {
+  function simulateEnding(p, seed, minFinal, maxTries, maxFinal, accept) {
     maxTries = maxTries || 3000;
     let best = null;
     for (let k = 0; k < maxTries; k++) {
       const s = simulate(p, seed + 104729 * k);
       if (!best || s.final > best.final) { best = s; best.seedUsed = seed + 104729 * k; best.tries = k + 1; }
-      if (s.final >= minFinal && (maxFinal == null || s.final <= maxFinal)) { s.seedUsed = seed + 104729 * k; s.tries = k + 1; s.found = true; return s; }
+      if (s.final >= minFinal && (maxFinal == null || s.final <= maxFinal) && (!accept || accept(s))) { s.seedUsed = seed + 104729 * k; s.tries = k + 1; s.found = true; return s; }
     }
     best.found = false; best.tries = maxTries; return best;
   }
