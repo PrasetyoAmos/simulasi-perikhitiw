@@ -785,26 +785,104 @@ function runScenario(key) {
     const p = params(); return { p, s: simFor(p) };
   } finally { IDS.forEach(i => $(i).value = snap[i]); }
 }
-function volDaily(p, s) {
-  const B = Math.max(1, parseFloat($('volBase').value) || 1e9);
-  const dv = Array.from({ length: p.days }, () => 0), db = dv.slice(), dj = dv.slice(), dn = dv.slice();
-  s.trades.forEach(t => { dv[t.day-1] += t.vol + t.gross; db[t.day-1] += t.vol; dj[t.day-1] += t.gross; dn[t.day-1]++; });
-  const ratio = dv.map((v, i) => { let sum = 0, c = 0; for (let j = Math.max(0, i - 30); j < i; j++) { sum += B + dv[j]; c++; } return (B + v) / (c ? sum / c : B); });
-  return { dv, db, dj, dn, ratio };
-}
 const f2 = v => (+v).toFixed(2), f6 = v => (+v).toFixed(6);
-const TRD_H = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total_setara_rp','fee_gk_koin','fee_gk_rp','pajak_total','fee_cfx_total_setara_rp','fee_cfx_koin','fee_cfx_rp','laba_mm5','kumulatif_mm5','hasil_counterparty','cp_fee_gk','cp_pajak','cp_fee_cfx','kas_mm5'];
-const trdRow = x => [x.day,x.no,f2(x.vol),f6(x.E),f2(x.buy),f6(x.Enet),f2(x.sell),x.win?'menang':'kalah',f2(x.gross),f2(x.ex.gk),f6(x.ex.gkCoin),f2(x.ex.gkRp),f2(x.ex.tax),f2(x.ex.cfx),f6(x.ex.cfxCoin),f2(x.ex.cfxRp),f2(x.mm.pnl),f2(x.cum),f2(x.cp.pnl),f2(x.cp.sellGK+x.cp.buyGK),f2(x.cp.sellTax),f2(x.cp.sellCFX+x.cp.buyCFX),f2(x.cash)];
-const SUM_H = ['skenario','modal','target','hari','trade','menang','kalah','total_beli','total_jual','volume_total_gk','laba_bersih_mm5','kas_akhir_mm5','hasil_counterparty','fee_gk_total_setara_rp','fee_gk_koin','fee_gk_rp','pajak_total','fee_cfx_total_setara_rp','fee_cfx_koin','fee_cfx_rp','volume_harian_maks','rasio_anomali_maks','batas_anomali'];
-function sumRow(name, r) {
+/* Definisi kolom: satu sumber untuk Excel, CSV, JSON, dan sheet Panduan.
+   t = tipe (int, rp, coin, pct, ratio, text, name) · v = nilai · f = rumus Excel (r = nomor baris) · fx = rumus dalam kata · d = arti */
+const TG = '$B$2', TP = '$D$2', TC = '$F$2', TM = '$H$2', TT = '$J$2', TR0 = 7;   // sel parameter + baris data pertama di sheet Trade
+const VB = '$B$2', VL = '$B$3', VR0 = 8;                                          // sel parameter + baris data pertama di sheet Volume
+const TRD_COLS = [
+  { g: 'INPUT TRADE', h: 'Hari ke-', t: 'int', v: x => x.day, d: 'Hari simulasi (1 = hari pertama).', fx: 'Hasil simulasi' },
+  { h: 'Trade ke- (dalam hari)', t: 'int', v: x => x.no, d: 'Nomor urut trade pada hari itu (maksimal 4 per hari).', fx: 'Hasil simulasi' },
+  { h: 'Nominal Beli MM5 (Rp)', t: 'rp', v: x => x.vol, d: 'Rupiah yang dipakai MM5 untuk membeli koin dari counterparty.', fx: 'Hasil simulasi' },
+  { h: 'Harga Beli (Rp per koin)', t: 'rp', v: x => x.buy, d: 'Harga koin saat MM5 membeli.', fx: 'Hasil simulasi' },
+  { h: 'Harga Jual (Rp per koin)', t: 'rp', v: x => x.sell, d: 'Harga koin saat MM5 menjual kembali. Di atas harga beli = menang, di bawahnya = kalah.', fx: 'Hasil simulasi' },
+  { g: 'TRANSAKSI MM5', h: 'Koin Dibeli Kotor', t: 'coin', v: x => x.E, f: r => `C${r}/D${r}`, d: 'Jumlah koin yang dibeli sebelum fee dipotong.', fx: 'C ÷ D' },
+  { h: 'Koin Bersih Setelah Fee Beli', t: 'coin', v: x => x.Enet, f: r => `F${r}*(1-${TG}-${TC})`, d: 'Koin yang tersisa setelah fee GK dan fee CFX sisi beli dipotong dari koin.', fx: 'F × (1 − Fee GK − Fee CFX)' },
+  { h: 'Nominal Jual MM5 (Rp)', t: 'rp', v: x => x.gross, f: r => `G${r}*E${r}`, d: 'Rupiah kotor yang diterima MM5 dari menjual koin bersih, sebelum fee dan pajak jual.', fx: 'G × E' },
+  { h: 'Hasil Trade', t: 'text', v: x => x.win ? 'Menang' : 'Kalah', f: r => `IF(E${r}>D${r},"Menang","Kalah")`, d: 'Menang bila harga jual lebih tinggi dari harga beli.', fx: 'E > D = Menang, selain itu Kalah' },
+  { g: 'FEE DAN PAJAK MM5 (Rp)', h: 'Fee GK Beli MM5 (setara Rp)', t: 'rp', v: x => x.mm.buyGK, f: r => `C${r}*${TG}`, d: 'Fee exchange GK sisi beli. Dipotong dari koin, nilainya dihitung setara Rupiah pada harga beli.', fx: 'C × Fee GK' },
+  { h: 'Fee CFX Beli MM5 (setara Rp)', t: 'rp', v: x => x.mm.buyCFX, f: r => `C${r}*${TC}`, d: 'Fee CFX sisi beli. Dipotong dari koin, nilainya dihitung setara Rupiah pada harga beli.', fx: 'C × Fee CFX' },
+  { h: 'Fee GK Jual MM5 (Rp)', t: 'rp', v: x => x.mm.sellGK, f: r => `H${r}*${TG}`, d: 'Fee exchange GK sisi jual, dibayar dalam Rupiah.', fx: 'H × Fee GK' },
+  { h: 'Pajak Jual MM5 (Rp)', t: 'rp', v: x => x.mm.sellTax, f: r => `H${r}*${TP}`, d: 'Pajak atas penjualan, titipan ke negara, dibayar dalam Rupiah.', fx: 'H × Pajak Jual' },
+  { h: 'Fee CFX Jual MM5 (Rp)', t: 'rp', v: x => x.mm.sellCFX, f: r => `H${r}*${TC}`, d: 'Fee CFX sisi jual, dibayar dalam Rupiah.', fx: 'H × Fee CFX' },
+  { g: 'LABA MM5 (Rp)', h: 'Laba atau Rugi Bersih Trade (Rp)', t: 'rp', v: x => x.mm.pnl, f: r => `H${r}-L${r}-M${r}-N${r}-C${r}`, d: 'Rupiah diterima dikurangi fee dan pajak jual, lalu dikurangi nominal beli. Fee sisi beli sudah terhitung di selisih koin (kolom G).', fx: 'H − L − M − N − C' },
+  { h: 'Laba Bersih Kumulatif (Rp)', t: 'rp', v: x => x.cum, f: r => `SUM(O$${TR0}:O${r})`, d: 'Akumulasi laba atau rugi bersih dari trade pertama sampai baris ini.', fx: 'Jumlah kolom O dari trade pertama' },
+  { h: 'Kas MM5 Setelah Trade (Rp)', t: 'rp', v: x => x.cash, f: r => `${TM}+P${r}`, d: 'Saldo Rupiah MM5 setelah trade ini selesai.', fx: 'Modal Awal + P' },
+  { g: 'COUNTERPARTY (Rp)', h: 'Fee GK Counterparty (setara Rp)', t: 'rp', v: x => x.cp.sellGK + x.cp.buyGK, f: r => `(C${r}+H${r})*${TG}`, d: 'Counterparty menjual koin saat MM5 beli (fee dari Rupiah) dan membelinya kembali saat MM5 jual (fee dari koin, setara Rupiah).', fx: '(C + H) × Fee GK' },
+  { h: 'Pajak Jual Counterparty (Rp)', t: 'rp', v: x => x.cp.sellTax, f: r => `C${r}*${TP}`, d: 'Pajak atas penjualan counterparty saat MM5 membeli.', fx: 'C × Pajak Jual' },
+  { h: 'Fee CFX Counterparty (setara Rp)', t: 'rp', v: x => x.cp.sellCFX + x.cp.buyCFX, f: r => `(C${r}+H${r})*${TC}`, d: 'Fee CFX counterparty di kedua sisi, bagian koin dinilai setara Rupiah.', fx: '(C + H) × Fee CFX' },
+  { h: 'Laba atau Rugi Counterparty (Rp)', t: 'rp', v: x => x.cp.pnl, f: r => `-F${r}*(E${r}-D${r})-R${r}-S${r}-T${r}`, d: 'Selisih harga atas koin yang diserahkan (rugi bila MM5 menang), dikurangi semua fee dan pajak counterparty.', fx: '−F × (E − D) − R − S − T' },
+  { g: 'PENDAPATAN EXCHANGE DAN NEGARA', h: 'Pendapatan Fee GK Total (setara Rp)', t: 'rp', v: x => x.ex.gk, f: r => `J${r}+L${r}+R${r}`, d: 'Fee GK dari MM5 dan counterparty. Bagian koin dinilai pada harga transaksi.', fx: 'J + L + R' },
+  { h: 'Fee GK Diterima dalam Koin', t: 'coin', v: x => x.ex.gkCoin, f: r => `(F${r}+G${r})*${TG}`, d: 'Jumlah koin yang diterima GK sebagai fee (sisi beli MM5 dan sisi beli counterparty).', fx: '(F + G) × Fee GK' },
+  { h: 'Fee GK Diterima dalam Rupiah', t: 'rp', v: x => x.ex.gkRp, f: r => `L${r}+C${r}*${TG}`, d: 'Fee GK yang diterima dalam Rupiah (sisi jual MM5 dan sisi jual counterparty).', fx: 'L + C × Fee GK' },
+  { h: 'Pajak Jual Total ke Negara (Rp)', t: 'rp', v: x => x.ex.tax, f: r => `M${r}+S${r}`, d: 'Pajak penjualan MM5 ditambah pajak penjualan counterparty.', fx: 'M + S' },
+  { h: 'Fee CFX Total (setara Rp)', t: 'rp', v: x => x.ex.cfx, f: r => `K${r}+N${r}+T${r}`, d: 'Fee CFX dari MM5 dan counterparty. Bagian koin dinilai pada harga transaksi.', fx: 'K + N + T' },
+  { h: 'Fee CFX Diterima dalam Koin', t: 'coin', v: x => x.ex.cfxCoin, f: r => `(F${r}+G${r})*${TC}`, d: 'Jumlah koin fee CFX (sisi beli MM5 dan sisi beli counterparty).', fx: '(F + G) × Fee CFX' },
+  { h: 'Fee CFX Diterima dalam Rupiah', t: 'rp', v: x => x.ex.cfxRp, f: r => `N${r}+C${r}*${TC}`, d: 'Fee CFX dalam Rupiah (sisi jual MM5 dan sisi jual counterparty).', fx: 'N + C × Fee CFX' },
+  { g: 'VOLUME', h: 'Volume Trade di GK Beli + Jual (Rp)', t: 'rp', v: x => x.vol + x.gross, f: r => `C${r}+H${r}`, d: 'Nilai transaksi yang tercatat di GK untuk trade ini.', fx: 'C + H' },
+];
+const volDaily = (p, s) => {
+  const B = Math.max(1, parseFloat($('volBase').value) || 1e9);
+  const dv = Array.from({ length: p.days }, () => 0), db = dv.slice(), dj = dv.slice(), dn = dv.slice(), avg = dv.slice();
+  s.trades.forEach(t => { dv[t.day-1] += t.vol + t.gross; db[t.day-1] += t.vol; dj[t.day-1] += t.gross; dn[t.day-1]++; });
+  const ratio = dv.map((v, i) => { let sum = 0, c = 0; for (let j = Math.max(0, i - 30); j < i; j++) { sum += B + dv[j]; c++; } avg[i] = c ? sum / c : B; return (B + v) / avg[i]; });
+  return { dv, db, dj, dn, ratio, avg, B };
+};
+const dayObjs = (p, s) => { const v = volDaily(p, s), L = Math.max(1, parseFloat($('volLimit').value) || 5);
+  return v.dv.map((x, i) => ({ day: i + 1, n: v.dn[i], b: v.db[i], j: v.dj[i], dv: x, tot: v.B + x, avg: v.avg[i], ratio: v.ratio[i], B: v.B, L, st: v.ratio[i] >= L ? 'ANOMALI' : v.ratio[i] >= L * 0.7 ? 'Waspada' : 'Aman' })); };
+const DAY_COLS = [
+  { h: 'Hari ke-', t: 'int', v: d => d.day, d: 'Hari simulasi.', fx: 'Hasil simulasi' },
+  { h: 'Jumlah Trade', t: 'int', v: d => d.n, f: (r, k) => k.T && `COUNTIF(${k.T('A')},A${r})`, d: 'Banyak trade MM5 pada hari itu.', fx: 'Hitung trade di sheet Trade pada hari yang sama' },
+  { h: 'Volume Beli MM5 (Rp)', t: 'rp', v: d => d.b, f: (r, k) => k.T && `SUMIF(${k.T('A')},A${r},${k.T('C')})`, d: 'Total nominal beli MM5 pada hari itu.', fx: 'Jumlah Nominal Beli MM5 pada hari yang sama' },
+  { h: 'Volume Jual MM5 (Rp)', t: 'rp', v: d => d.j, f: (r, k) => k.T && `SUMIF(${k.T('A')},A${r},${k.T('H')})`, d: 'Total nominal jual MM5 pada hari itu.', fx: 'Jumlah Nominal Jual MM5 pada hari yang sama' },
+  { h: 'Volume MM5 Hari Ini (Rp)', t: 'rp', v: d => d.dv, f: r => `C${r}+D${r}`, d: 'Volume MM5 yang tercatat di GK pada hari itu.', fx: 'C + D' },
+  { h: 'Volume Total GK Dasar + MM5 (Rp)', t: 'rp', v: d => d.tot, f: r => `${VB}+E${r}`, d: 'Volume dasar GK per hari ditambah volume MM5. Dipakai sebagai angka pembanding anomali.', fx: 'Volume Dasar GK + E' },
+  { h: 'Rata-rata 30 Hari Sebelumnya (Rp)', t: 'rp', v: d => d.avg, f: r => r === VR0 ? VB : `AVERAGE(F${Math.max(VR0, r - 30)}:F${r - 1})`, d: 'Rata-rata kolom F selama maksimal 30 hari sebelumnya. Hari pertama memakai volume dasar.', fx: 'Rata-rata F, 30 hari sebelumnya' },
+  { h: 'Rasio vs Rata-rata 30 Hari (kali)', t: 'ratio', v: d => d.ratio, f: r => `F${r}/G${r}`, d: 'Seberapa besar volume hari itu dibanding rata-rata 30 hari sebelumnya.', fx: 'F ÷ G' },
+  { h: 'Status Anomali', t: 'text', v: d => d.st, f: r => `IF(H${r}>=${VL},"ANOMALI",IF(H${r}>=0.7*${VL},"Waspada","Aman"))`, d: 'ANOMALI bila rasio mencapai batas, Waspada bila sudah 70% dari batas, selain itu Aman.', fx: 'H ≥ Batas = ANOMALI · H ≥ 70% Batas = Waspada' },
+];
+function sumObj(name, r) {
   const { p, s } = r, t = s.trades, sm = f => t.reduce((a, x) => a + f(x), 0), vd = volDaily(p, s), LIM = Math.max(1, parseFloat($('volLimit').value) || 5);
-  const buy = sm(x => x.vol), sell = sm(x => x.gross);
-  return [name, p.capital, p.target, p.days, t.length, t.filter(x => x.win).length, t.filter(x => !x.win).length, f2(buy), f2(sell), f2(buy + sell), f2(t.length ? t[t.length-1].cum : 0), f2(t.length ? t[t.length-1].cash : p.capital), f2(sm(x => x.cp.pnl)),
-    f2(sm(x => x.ex.gk)), f6(sm(x => x.ex.gkCoin)), f2(sm(x => x.ex.gkRp)), f2(sm(x => x.ex.tax)), f2(sm(x => x.ex.cfx)), f6(sm(x => x.ex.cfxCoin)), f2(sm(x => x.ex.cfxRp)), f2(Math.max(0, ...vd.dv)), Math.max(...vd.ratio).toFixed(3), LIM];
+  return { name, p, n: t.length, win: t.filter(x => x.win).length, buy: sm(x => x.vol), sell: sm(x => x.gross), cum: t.length ? t[t.length-1].cum : 0, sm, vd, LIM };
 }
-const DAY_H = ['hari','trade','volume_beli','volume_jual','volume_total','rasio_vs_rata30'];
-const dayRows = (p, s) => { const v = volDaily(p, s); return v.dv.map((x, i) => [i+1, v.dn[i], f2(v.db[i]), f2(v.dj[i]), f2(x), v.ratio[i].toFixed(3)]); };
-const toCsv = (h, rows) => [h.join(',')].concat(rows.map(r => r.join(','))).join('\n');
+const sumRng = c => (r, k) => k.T && `SUM(${k.T(c)})`;
+const SUM_COLS = [
+  { h: 'Skenario', t: 'name', v: o => o.name, d: 'Nama pola simulasi.', fx: '-' },
+  { h: 'Modal Awal MM5 (Rp)', t: 'rp', v: o => o.p.capital, f: (r, k) => k.T && `${k.sT}!${TM}`, d: 'Modal awal akun MM5.', fx: 'Parameter di sheet Trade' },
+  { h: 'Target Laba Bersih (Rp)', t: 'rp', v: o => o.p.target, f: (r, k) => k.T && `${k.sT}!${TT}`, d: 'Target laba bersih MM5.', fx: 'Parameter di sheet Trade' },
+  { h: 'Jumlah Hari', t: 'int', v: o => o.p.days, f: (r, k) => k.V && `COUNT(${k.V('A')})`, d: 'Lama simulasi dalam hari.', fx: 'Hitung baris di sheet Volume' },
+  { h: 'Jumlah Trade', t: 'int', v: o => o.n, f: (r, k) => k.T && `COUNT(${k.T('B')})`, d: 'Total trade MM5 selama simulasi.', fx: 'Hitung baris di sheet Trade' },
+  { h: 'Trade Menang', t: 'int', v: o => o.win, f: (r, k) => k.T && `COUNTIF(${k.T('I')},"Menang")`, d: 'Banyak trade dengan harga jual di atas harga beli.', fx: 'Hitung Hasil Trade = Menang' },
+  { h: 'Trade Kalah', t: 'int', v: o => o.n - o.win, f: (r, k) => k.T && `COUNTIF(${k.T('I')},"Kalah")`, d: 'Banyak trade dengan harga jual di bawah harga beli.', fx: 'Hitung Hasil Trade = Kalah' },
+  { h: 'Win Rate (%)', t: 'pct', v: o => o.n ? o.win / o.n : 0, f: r => `IF(E${r}=0,0,F${r}/E${r})`, d: 'Persentase trade yang menang.', fx: 'F ÷ E' },
+  { h: 'Total Nominal Beli MM5 (Rp)', t: 'rp', v: o => o.buy, f: sumRng('C'), d: 'Jumlah seluruh nominal beli MM5.', fx: 'Jumlah Nominal Beli MM5' },
+  { h: 'Total Nominal Jual MM5 (Rp)', t: 'rp', v: o => o.sell, f: sumRng('H'), d: 'Jumlah seluruh nominal jual MM5.', fx: 'Jumlah Nominal Jual MM5' },
+  { h: 'Volume Total di GK Beli + Jual (Rp)', t: 'rp', v: o => o.buy + o.sell, f: r => `I${r}+J${r}`, d: 'Volume MM5 yang tercatat di GK selama simulasi.', fx: 'I + J' },
+  { h: 'Laba Bersih MM5 (Rp)', t: 'rp', v: o => o.cum, f: sumRng('O'), d: 'Total laba atau rugi bersih MM5 setelah fee dan pajak.', fx: 'Jumlah Laba atau Rugi Bersih Trade' },
+  { h: 'Kas Akhir MM5 (Rp)', t: 'rp', v: o => o.p.capital + o.cum, f: r => `B${r}+L${r}`, d: 'Saldo Rupiah MM5 di akhir simulasi.', fx: 'B + L' },
+  { h: 'Laba vs Target (%)', t: 'pct', v: o => o.p.target ? o.cum / o.p.target : 0, f: r => `IF(C${r}=0,0,L${r}/C${r})`, d: 'Laba bersih dibanding target. 100% = tepat target.', fx: 'L ÷ C' },
+  { h: 'Laba atau Rugi Counterparty (Rp)', t: 'rp', v: o => o.sm(x => x.cp.pnl), f: sumRng('U'), d: 'Hasil counterparty secara total. Negatif = counterparty rugi.', fx: 'Jumlah hasil counterparty' },
+  { h: 'Pendapatan Fee GK Total (setara Rp)', t: 'rp', v: o => o.sm(x => x.ex.gk), f: sumRng('V'), d: 'Total fee GK dari MM5 dan counterparty.', fx: 'Jumlah Pendapatan Fee GK' },
+  { h: 'Fee GK dalam Koin', t: 'coin', v: o => o.sm(x => x.ex.gkCoin), f: sumRng('W'), d: 'Total koin fee GK.', fx: 'Jumlah Fee GK dalam Koin' },
+  { h: 'Fee GK dalam Rupiah', t: 'rp', v: o => o.sm(x => x.ex.gkRp), f: sumRng('X'), d: 'Total Rupiah fee GK.', fx: 'Jumlah Fee GK dalam Rupiah' },
+  { h: 'Pajak Jual Total ke Negara (Rp)', t: 'rp', v: o => o.sm(x => x.ex.tax), f: sumRng('Y'), d: 'Total pajak penjualan MM5 dan counterparty.', fx: 'Jumlah Pajak Jual Total' },
+  { h: 'Fee CFX Total (setara Rp)', t: 'rp', v: o => o.sm(x => x.ex.cfx), f: sumRng('Z'), d: 'Total fee CFX dari MM5 dan counterparty.', fx: 'Jumlah Fee CFX Total' },
+  { h: 'Fee CFX dalam Koin', t: 'coin', v: o => o.sm(x => x.ex.cfxCoin), f: sumRng('AA'), d: 'Total koin fee CFX.', fx: 'Jumlah Fee CFX dalam Koin' },
+  { h: 'Fee CFX dalam Rupiah', t: 'rp', v: o => o.sm(x => x.ex.cfxRp), f: sumRng('AB'), d: 'Total Rupiah fee CFX.', fx: 'Jumlah Fee CFX dalam Rupiah' },
+  { h: 'Volume Harian MM5 Tertinggi (Rp)', t: 'rp', v: o => Math.max(0, ...o.vd.dv), f: (r, k) => k.V && `MAX(${k.V('E')})`, d: 'Volume MM5 terbesar dalam satu hari.', fx: 'Nilai terbesar Volume MM5 Hari Ini' },
+  { h: 'Rasio Anomali Tertinggi (kali)', t: 'ratio', v: o => Math.max(...o.vd.ratio), f: (r, k) => k.V && `MAX(${k.V('H')})`, d: 'Rasio volume harian vs rata-rata 30 hari yang tertinggi.', fx: 'Nilai terbesar Rasio' },
+  { h: 'Batas Anomali (kali)', t: 'ratio', v: o => o.LIM, f: (r, k) => k.V && `${k.sV}!${VL}`, d: 'Batas rasio anomali yang dipakai.', fx: 'Parameter di sheet Volume' },
+  { h: 'Status Anomali', t: 'text', v: o => { const m = Math.max(...o.vd.ratio); return m >= o.LIM ? 'ANOMALI' : m >= o.LIM * 0.7 ? 'Waspada' : 'Aman'; }, f: r => `IF(X${r}>=Y${r},"ANOMALI",IF(X${r}>=0.7*Y${r},"Waspada","Aman"))`, d: 'ANOMALI bila rasio tertinggi mencapai batas, Waspada bila 70% dari batas, selain itu Aman.', fx: 'X ≥ Y = ANOMALI · X ≥ 70% Y = Waspada' },
+];
+/* nilai untuk CSV dan JSON */
+const fv = (c, v) => c.t === 'rp' ? +f2(v) : c.t === 'coin' ? +f6(v) : c.t === 'pct' ? +(v * 100).toFixed(2) : c.t === 'ratio' ? +(+v).toFixed(3) : v;
+const colsOf = (cols, row) => cols.map(c => fv(c, c.v(row)));
+const sumRowsOf = R => R.map(x => colsOf(SUM_COLS, sumObj(x.name, x.r)));
+const trdRowsOf = x => x.r.s.trades.map(t => colsOf(TRD_COLS, t));
+const dayRowsOf = x => dayObjs(x.r.p, x.r.s).map(d => colsOf(DAY_COLS, d));
+const H_OF = cols => cols.map(c => c.h);
+const csvq = v => { const s = String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const toCsv = (h, rows) => [h].concat(rows).map(r => r.map(csvq).join(',')).join('\n');
 function crc32(u) { let c, crc = -1; if (!crc32.t) { crc32.t = []; for (let n = 0; n < 256; n++) { c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; crc32.t[n] = c; } } for (let i = 0; i < u.length; i++) crc = (crc >>> 8) ^ crc32.t[(crc ^ u[i]) & 255]; return (crc ^ -1) >>> 0; }
 function makeZip(files) {
   const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
@@ -822,24 +900,103 @@ function makeZip(files) {
 function buildXlsx(sheets) {
   const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const col = n => { let r = ''; n++; while (n > 0) { const m = (n - 1) % 26; r = String.fromCharCode(65 + m) + r; n = Math.floor((n - 1) / 26); } return r; };
-  const names = [], used = new Set();
-  const nm = raw => { let b = raw.replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31), n = b, i = 2; while (used.has(n.toLowerCase())) n = b.slice(0, 28) + ' ' + i++; used.add(n.toLowerCase()); return n; };
   const H = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const xf = (num, font, fill, al) => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"${al ? ' applyAlignment="1">' + al + '</xf>' : '/>'}`;
+  const AL = (h, v, w) => `<alignment${h ? ` horizontal="${h}"` : ''} vertical="${v || 'center'}"${w ? ' wrapText="1"' : ''}/>`;
+  const styles = H + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="6"><numFmt numFmtId="164" formatCode="#,##0.00####"/><numFmt numFmtId="165" formatCode="#,##0.00"/><numFmt numFmtId="166" formatCode="#,##0.000000"/><numFmt numFmtId="167" formatCode="0.00%"/><numFmt numFmtId="168" formatCode="0.00000%"/><numFmt numFmtId="169" formatCode="0.000"/></numFmts>'
+    + '<fonts count="7"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><sz val="11"/><color rgb="FF0000FF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><i/><sz val="9"/><color rgb="FF6B7280"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF14532D"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF14532D"/><name val="Calibri"/></font></fonts>'
+    + '<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF14532D"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDCFCE7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFEF9C3"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    + '<cellXfs count="21">' + [
+      xf(0, 0, 0), xf(0, 1, 2, AL('center', 'center', 1)), xf(164, 0, 0), xf(0, 6, 3, AL('center', 'center')),
+      xf(0, 4, 0, AL('left', 'top', 1)), xf(165, 2, 0), xf(165, 0, 0), xf(166, 0, 0), xf(3, 2, 0), xf(3, 0, 0),
+      xf(167, 0, 0), xf(168, 2, 4), xf(169, 0, 0), xf(0, 5, 0), xf(0, 3, 0), xf(0, 0, 0, AL('left', 'top', 1)),
+      xf(3, 2, 4), xf(2, 2, 4), xf(0, 0, 0), xf(0, 0, 0, AL('center', 'center')), xf(0, 3, 3, AL('left', 'center', 1))].join('') + '</cellXfs></styleSheet>';
+  const used = new Set(), names = sheets.map(sh => { let b = sh.name.replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31), n = b, i = 2; while (used.has(n.toLowerCase())) n = b.slice(0, 28) + ' ' + i++; used.add(n.toLowerCase()); return n; });
   const files = [{ raw: 1, name: '[Content_Types].xml', data: H + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' + sheets.map((x, i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '</Types>' },
     { raw: 1, name: '_rels/.rels', data: H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
-    { raw: 1, name: 'xl/styles.xml', data: H + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00####"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF14532D"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>' }];
+    { raw: 1, name: 'xl/styles.xml', data: styles }];
+  const ser = (c, r, ci) => {
+    if (c == null) return '';
+    if (typeof c !== 'object') c = { v: c };
+    let { v, f, s } = c; const ref = col(ci) + r;
+    if (s === undefined) s = typeof v === 'number' ? 2 : 0;
+    const sa = s ? ` s="${s}"` : '';
+    if (v === '' || v == null) return `<c r="${ref}"${sa}/>`;
+    if (typeof v === 'number') { if (!isFinite(v)) v = 0; return `<c r="${ref}"${sa}>${f ? `<f>${esc(f)}</f>` : ''}<v>${v}</v></c>`; }
+    return f ? `<c r="${ref}"${sa} t="str"><f>${esc(f)}</f><v>${esc(v)}</v></c>` : `<c r="${ref}"${sa} t="inlineStr"><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+  };
   sheets.forEach((sh, si) => {
-    names.push(nm(sh.name));
-    const cell = (v, r, c, hd) => { const ref = col(c) + r;
-      if (!hd && /^-?\d+(\.\d+)?$/.test(String(v))) return `<c r="${ref}" s="2"><v>${v}</v></c>`;
-      return `<c r="${ref}"${hd ? ' s="1"' : ''} t="inlineStr"><is><t>${esc(v)}</t></is></c>`; };
-    const rows = [`<row r="1" ht="30" customHeight="1">${sh.header.map((h, c) => cell(h, 1, c, true)).join('')}</row>`].concat(sh.rows.map((r, i) => `<row r="${i + 2}">${r.map((v, c) => cell(v, i + 2, c)).join('')}</row>`));
-    const w = sh.header.map((h, c) => `<col min="${c+1}" max="${c+1}" width="${Math.max(12, Math.min(26, h.length + 4))}" customWidth="1"/>`).join('');
-    files.push({ raw: 1, name: `xl/worksheets/sheet${si + 1}.xml`, data: H + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${w}</cols><sheetData>${rows.join('')}</sheetData></worksheet>` });
+    const rows = sh.grid.map((row, i) => `<row r="${i + 1}"${sh.heights && sh.heights[i + 1] ? ` ht="${sh.heights[i + 1]}" customHeight="1"` : ''}>${row.map((c, ci) => ser(c, i + 1, ci)).join('')}</row>`).join('');
+    const w = (sh.widths || []).map((x, c) => `<col min="${c+1}" max="${c+1}" width="${x}" customWidth="1"/>`).join('');
+    const fz = sh.freeze, pane = fz ? `<pane${fz.c ? ` xSplit="${fz.c}"` : ''} ySplit="${fz.r}" topLeftCell="${col(fz.c || 0)}${fz.r + 1}" activePane="${fz.c ? 'bottomRight' : 'bottomLeft'}" state="frozen"/>` : '';
+    const mg = sh.merges && sh.merges.length ? `<mergeCells count="${sh.merges.length}">${sh.merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '';
+    files.push({ raw: 1, name: `xl/worksheets/sheet${si + 1}.xml`, data: H + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"${si === 0 ? ' tabSelected="1"' : ''}${sh.noGrid ? ' showGridLines="0"' : ''}>${pane}</sheetView></sheetViews><cols>${w}</cols><sheetData>${rows}</sheetData>${mg}</worksheet>` });
   });
-  files.push({ raw: 1, name: 'xl/workbook.xml', data: H + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + names.map((n, i) => `<sheet name="${esc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>' });
+  files.push({ raw: 1, name: 'xl/workbook.xml', data: H + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + names.map((n, i) => `<sheet name="${esc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>' });
   files.push({ raw: 1, name: 'xl/_rels/workbook.xml.rels', data: H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + sheets.map((x, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') + `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` });
   return new Blob([makeZip(files)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+/* ---- penyusun sheet Excel ---- */
+const XL_COL = n => { let r = ''; n++; while (n > 0) { const m = (n - 1) % 26; r = String.fromCharCode(65 + m) + r; n = Math.floor((n - 1) / 26); } return r; };
+const XST = { int: [8, 9], rp: [5, 6], coin: [7, 7], pct: [10, 10], ratio: [12, 12], text: [19, 19], name: [14, 14] };
+const xcell = (c, val, formula) => ({ v: val, f: formula || undefined, s: XST[c.t][formula ? 1 : 0] });
+const xwidth = (cols, min) => cols.map(c => Math.max(min || 14, Math.min(28, Math.round(c.h.length * 0.85) + 3)));
+function xlsxTrade(x) {
+  const p = x.r.p, t = x.r.s.trades, n = Math.max(1, t.length);
+  const grid = [[{ v: 'Rincian Trade – ' + x.name, s: 13 }],
+    [{ v: 'Fee GK', s: 14 }, { v: p.gk, s: 11 }, { v: 'Pajak Jual', s: 14 }, { v: p.pph, s: 11 }, { v: 'Fee CFX', s: 14 }, { v: p.cfx, s: 11 }, { v: 'Modal Awal MM5 (Rp)', s: 14 }, { v: p.capital, s: 16 }, { v: 'Target Laba Bersih (Rp)', s: 14 }, { v: p.target, s: 16 }],
+    [], [], [], []];
+  const merges = []; let gs = -1;
+  TRD_COLS.forEach((c, i) => { if (c.g) { if (gs >= 0 && i - 1 > gs) merges.push(`${XL_COL(gs)}4:${XL_COL(i - 1)}4`); gs = i; } grid[3].push({ v: c.g || '', s: 3 }); grid[4].push({ v: c.h, s: 1 }); grid[5].push({ v: c.fx, s: 4 }); });
+  if (TRD_COLS.length - 1 > gs) merges.push(`${XL_COL(gs)}4:${XL_COL(TRD_COLS.length - 1)}4`);
+  t.forEach((tr, i) => { const r = TR0 + i; grid.push(TRD_COLS.map(c => xcell(c, c.v(tr), c.f && c.f(r)))); });
+  const widths = xwidth(TRD_COLS, 16); widths[0] = 10; widths[1] = 14; [2, 4, 6, 8].forEach(i => widths[i] = Math.max(widths[i], 24));
+  return { name: x.tn, grid, widths, merges, freeze: { r: 6, c: 2 }, heights: { 5: 48, 6: 30 } };
+}
+function xlsxVol(x, hasT, n) {
+  const d = dayObjs(x.r.p, x.r.s), nn = Math.max(1, n);
+  const k = { T: hasT ? c => `'${x.tn}'!$${c}$${TR0}:$${c}$${TR0 + nn - 1}` : null };
+  const grid = [[{ v: 'Volume Harian di GK – ' + x.name, s: 13 }],
+    [{ v: 'Volume Dasar GK per Hari (Rp)', s: 14 }, { v: d.length ? d[0].B : 0, s: 16 }],
+    [{ v: 'Batas Anomali (kali rata-rata)', s: 14 }, { v: d.length ? d[0].L : 5, s: 17 }],
+    [{ v: 'Jendela Rata-rata (hari)', s: 14 }, { v: 30, s: 9 }], [], [DAY_COLS.map(() => null)][0].map((_, i) => ({ v: DAY_COLS[i].h, s: 1 })), DAY_COLS.map(c => ({ v: c.fx, s: 4 }))];
+  d.forEach((row, i) => { const r = VR0 + i; grid.push(DAY_COLS.map(c => { const f = c.f ? c.f(r, k) : null; return xcell(c, c.v(row), f || undefined); })); });
+  return { name: x.vn, grid, widths: xwidth(DAY_COLS, 16).map((w, i) => i === 0 ? 30 : w), freeze: { r: 7, c: 1 }, heights: { 6: 48, 7: 30 } };
+}
+function xlsxSum(R, hasT, hasD) {
+  const grid = [[{ v: 'Ringkasan Simulasi MM5', s: 13 }], SUM_COLS.map(c => ({ v: c.h, s: 1 })), SUM_COLS.map(c => ({ v: c.fx, s: 4 }))];
+  R.forEach((x, i) => { const r = 4 + i, n = Math.max(1, x.r.s.trades.length);
+    const k = { T: hasT ? c => `'${x.tn}'!$${c}$${TR0}:$${c}$${TR0 + n - 1}` : null, V: hasD ? c => `'${x.vn}'!$${c}$${VR0}:$${c}$${VR0 + x.r.p.days - 1}` : null, sT: `'${x.tn}'`, sV: `'${x.vn}'` };
+    grid.push(SUM_COLS.map(c => { const f = c.f ? c.f(r, k) : null; return xcell(c, c.v(x.o), f || undefined); })); });
+  return { name: 'Ringkasan', grid, widths: xwidth(SUM_COLS, 16).map((w, i) => i === 0 ? 24 : w), freeze: { r: 3, c: 1 }, heights: { 2: 48, 3: 30 } };
+}
+function dictRows(hasS, hasT, hasD) {
+  const rows = [], kT = { T: c => `'Trade …'!$${c}$${TR0}:$${c}$…`, V: c => `'Volume …'!$${c}$${VR0}:$${c}$…`, sT: "'Trade …'", sV: "'Volume …'" };
+  const add = (sheet, cols, ex) => cols.forEach((c, i) => rows.push([sheet, XL_COL(i), c.h, c.d, c.fx, c.f ? '=' + ex(c, i) : 'Nilai tetap (tanpa rumus)']));
+  if (hasS) add('Ringkasan', SUM_COLS, c => (c.f(4, kT) || 'Nilai tetap'));
+  if (hasT) add('Trade (tiap skenario)', TRD_COLS, c => c.f(TR0));
+  if (hasD) add('Volume (tiap skenario)', DAY_COLS, c => (c.f(VR0 + 1, { T: kT.T }) || 'Nilai tetap'));
+  return rows;
+}
+function xlsxGuide(R, hasS, hasT, hasD, stamp) {
+  const W = s => ({ v: s, s: 15 }), B = s => ({ v: s, s: 14 }), grid = [
+    [{ v: 'Panduan Membaca Data Simulasi MM5', s: 13 }],
+    [W('Dibuat ' + stamp + ' dari dashboard simulasi. Semua angka adalah hasil simulasi, bukan transaksi nyata.')], [],
+    [B('Cara membaca')],
+    [W('Angka biru = data masukan hasil simulasi (nilai tetap). Angka hitam = rumus Excel yang menghitung dari kolom lain, jadi bisa dilacak.')],
+    [W('Sel kuning di bagian atas sheet Trade dan Volume = parameter (tarif, modal, target, batas anomali). Ubah nilainya dan semua rumus ikut berubah.')],
+    [W('Satu trade = MM5 membeli koin dari counterparty, lalu menjual kembali. Fee sisi beli dipotong dari koin, fee sisi jual dan pajak dibayar dalam Rupiah. Fee dalam koin dinilai setara Rupiah pada harga transaksi.')],
+    [W('Istilah: MM5 = akun market maker 5. GK = Gudang Kripto (exchange). CFX = bursa tempat fee CFX dibayar. Counterparty = lawan transaksi MM5, dicatat terpisah.')], [],
+    [B('Isi workbook')]];
+  if (hasS) grid.push([W('Ringkasan: satu baris per skenario (laba, kas akhir, fee, pajak, volume, status anomali).')]);
+  if (hasT) grid.push([W('Trade <skenario>: rincian tiap trade dengan rumus lengkap, dikelompokkan MM5, counterparty, dan pendapatan exchange.')]);
+  if (hasD) grid.push([W('Volume <skenario>: volume harian di GK dan pengecekan anomali terhadap rata-rata 30 hari.')]);
+  grid.push([], [B('Kamus kolom')], ['Sheet', 'Kolom', 'Nama Kolom', 'Arti', 'Rumus dalam Kata', 'Rumus Excel (contoh baris pertama)'].map(h => ({ v: h, s: 1 })));
+  dictRows(hasS, hasT, hasD).forEach(r => grid.push(r.map(v => ({ v, s: 15 }))));
+  const widths = [24, 9, 38, 64, 34, 46], heights = {}, merges = [];
+  grid.forEach((row, i) => { if (row.length === 1 && row[0].s === 15) { merges.push(`A${i + 1}:F${i + 1}`); heights[i + 1] = 16 * Math.ceil(String(row[0].v).length / 170) + 2; } });
+  return { name: 'Panduan', grid, widths, merges, noGrid: true };
 }
 function saveBlob(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
 function downloadData() {
@@ -849,27 +1006,33 @@ function downloadData() {
   if (!ct.length) { msg.textContent = 'Pilih minimal satu isi file.'; return; }
   const R = sc.map(k => ({ k, name: SCN[k], r: runScenario(k) })), stamp = new Date().toISOString().slice(0, 10), files = [];
   const slug = k => k === 'cur' ? 'saat-ini' : k;
+  const hasS = ct.includes('sum'), hasT = ct.includes('trd'), hasD = ct.includes('day');
+  const dictCsv = () => toCsv(['Sheet / File', 'Kolom', 'Nama Kolom', 'Arti', 'Rumus dalam Kata', 'Rumus Excel (contoh)'], dictRows(hasS, hasT, hasD));
   if (fm === 'xlsx') {
-    const sh = [];
-    if (ct.includes('sum')) sh.push({ name: 'Ringkasan', header: SUM_H, rows: R.map(x => sumRow(x.name, x.r)) });
-    R.forEach(x => { if (ct.includes('trd')) sh.push({ name: 'Trade ' + x.name, header: TRD_H, rows: x.r.s.trades.map(trdRow) }); if (ct.includes('day')) sh.push({ name: 'Volume ' + x.name, header: DAY_H, rows: dayRows(x.r.p, x.r.s) }); });
-    saveBlob(buildXlsx(sh), `simulasi-mm5-${stamp}.xlsx`); msg.textContent = `Terunduh: Excel dengan ${sh.length} sheet.`; return;
+    R.forEach(x => { x.tn = 'Trade ' + x.name; x.vn = 'Volume ' + x.name; x.o = sumObj(x.name, x.r); });
+    const sh = [xlsxGuide(R, hasS, hasT, hasD, stamp)];
+    if (hasS) sh.push(xlsxSum(R, hasT, hasD));
+    R.forEach(x => { if (hasT) sh.push(xlsxTrade(x)); if (hasD) sh.push(xlsxVol(x, hasT, x.r.s.trades.length)); });
+    saveBlob(buildXlsx(sh), `simulasi-mm5-${stamp}.xlsx`); msg.textContent = `Terunduh: Excel dengan ${sh.length} sheet (termasuk Panduan).`; return;
   }
+  const obj = (cols, row) => Object.fromEntries(cols.map((c, i) => [c.h, row[i]]));
   if (fm === 'json') {
-    const o = { dibuat: new Date().toISOString(), skenario: R.map(x => ({ nama: x.name, ringkasan: ct.includes('sum') ? Object.fromEntries(SUM_H.map((h, i) => [h, sumRow(x.name, x.r)[i]])) : undefined,
-      trade: ct.includes('trd') ? x.r.s.trades.map(t => Object.fromEntries(TRD_H.map((h, i) => [h, trdRow(t)[i]]))) : undefined,
-      volume_harian: ct.includes('day') ? dayRows(x.r.p, x.r.s).map(r => Object.fromEntries(DAY_H.map((h, i) => [h, r[i]]))) : undefined })) };
+    const o = { dibuat: new Date().toISOString(), skenario: R.map(x => ({ nama: x.name, ringkasan: hasS ? obj(SUM_COLS, colsOf(SUM_COLS, sumObj(x.name, x.r))) : undefined,
+      trade: hasT ? trdRowsOf(x).map(r => obj(TRD_COLS, r)) : undefined, volume_harian: hasD ? dayRowsOf(x).map(r => obj(DAY_COLS, r)) : undefined })),
+      kamus_kolom: dictRows(hasS, hasT, hasD).map(r => ({ sheet: r[0], kolom: r[1], nama: r[2], arti: r[3], rumus: r[4] })) };
     saveBlob(new Blob([JSON.stringify(o, null, 1)], { type: 'application/json' }), `simulasi-mm5-${stamp}.json`); msg.textContent = 'Terunduh: 1 file JSON.'; return;
   }
   if (fm === 'csv') {
-    if (ct.includes('sum')) files.push({ name: `ringkasan-${stamp}.csv`, data: toCsv(SUM_H, R.map(x => sumRow(x.name, x.r))) });
-    if (ct.includes('trd')) files.push({ name: `rincian-trade-${stamp}.csv`, data: toCsv(['skenario'].concat(TRD_H), R.flatMap(x => x.r.s.trades.map(t => [x.name].concat(trdRow(t))))) });
-    if (ct.includes('day')) files.push({ name: `volume-harian-${stamp}.csv`, data: toCsv(['skenario'].concat(DAY_H), R.flatMap(x => dayRows(x.r.p, x.r.s).map(r => [x.name].concat(r)))) });
+    if (hasS) files.push({ name: `ringkasan-${stamp}.csv`, data: toCsv(H_OF(SUM_COLS), sumRowsOf(R)) });
+    if (hasT) files.push({ name: `rincian-trade-${stamp}.csv`, data: toCsv(['Skenario'].concat(H_OF(TRD_COLS)), R.flatMap(x => trdRowsOf(x).map(r => [x.name].concat(r)))) });
+    if (hasD) files.push({ name: `volume-harian-${stamp}.csv`, data: toCsv(['Skenario'].concat(H_OF(DAY_COLS)), R.flatMap(x => dayRowsOf(x).map(r => [x.name].concat(r)))) });
+    files.push({ name: `kamus-kolom-${stamp}.csv`, data: dictCsv() });
     files.forEach((f, i) => setTimeout(() => saveBlob(new Blob(['﻿' + f.data], { type: 'text/csv;charset=utf-8' }), f.name), i * 250));
     msg.textContent = `Terunduh: ${files.length} file CSV.`; return;
   }
-  if (ct.includes('sum')) files.push({ name: `ringkasan.csv`, data: toCsv(SUM_H, R.map(x => sumRow(x.name, x.r))) });
-  R.forEach(x => { if (ct.includes('trd')) files.push({ name: `rincian-trade-${slug(x.k)}.csv`, data: toCsv(TRD_H, x.r.s.trades.map(trdRow)) }); if (ct.includes('day')) files.push({ name: `volume-harian-${slug(x.k)}.csv`, data: toCsv(DAY_H, dayRows(x.r.p, x.r.s)) }); });
+  if (hasS) files.push({ name: `ringkasan.csv`, data: toCsv(H_OF(SUM_COLS), sumRowsOf(R)) });
+  R.forEach(x => { if (hasT) files.push({ name: `rincian-trade-${slug(x.k)}.csv`, data: toCsv(H_OF(TRD_COLS), trdRowsOf(x)) }); if (hasD) files.push({ name: `volume-harian-${slug(x.k)}.csv`, data: toCsv(H_OF(DAY_COLS), dayRowsOf(x)) }); });
+  files.push({ name: 'kamus-kolom.csv', data: dictCsv() });
   saveBlob(makeZip(files), `simulasi-mm5-${stamp}.zip`); msg.textContent = `Terunduh: ZIP berisi ${files.length} file.`;
 }
 (function () { const d = $('dlDlg'), open = () => { $('dlMsg').textContent = ''; d.showModal(); };
