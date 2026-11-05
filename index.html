@@ -173,7 +173,7 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
     <button class="sec" id="pause">⏸ Jeda</button>
     <button class="sec" id="skip">⏭ Selesai</button>
     <label>Kecepatan</label>
-    <select id="speed"><option value="1">Pelan</option><option value="3" selected>Sedang</option><option value="8">Cepat</option><option value="20">Sangat cepat</option></select>
+    <select id="speed"><option value="1" selected>Pelan</option><option value="3">Sedang</option><option value="8">Cepat</option><option value="20">Sangat cepat</option></select>
   </div>
   <span class="stat" id="stat"></span>
   <button class="sec" id="fs" title="Layar penuh (tombol F)">⛶ Layar penuh</button>
@@ -645,14 +645,14 @@ function setP(o) { Object.keys(o).forEach(k => $(k).value = o[k]); rerun(); }
 const PRESETS = {
   vino:    { d: '<b>Mas Vino:</b> trade menang besar (Rp200–325 jt) di harga jauh di atas rata-rata, trade kalah kecil. MM5 sering kalah, tapi saldo akhir untung. Berhenti trade saat target tercapai.',
              v: { winRate: 40, winMin: 9.3, winMax: 38.7, loseMin: 3, loseMax: 5, winVolMin: 200000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 10000000, jitter: 0, maxWinStreak: 3, stopAtTarget: '1', minTrades: 1, maxTrades: 4 } },
-  kecil:   { d: '<b>Kecil:</b> 1–2 trade per hari, nilai kecil (Rp5–50 jt), selisih harga tipis. Risiko rendah, untung kecil; target 83% sulit dicapai.',
-             v: { winRate: 55, winMin: 4, winMax: 12, loseMin: 2, loseMax: 6, winVolMin: 5000000, winVolMax: 50000000, loseVolMin: 5000000, loseVolMax: 50000000, jitter: 2, maxWinStreak: 3, stopAtTarget: '0', minTrades: 1, maxTrades: 2 } },
-  sedang:  { d: '<b>Sedang:</b> 1–4 trade per hari, nilai menengah (Rp10–150 jt), menang sekitar 55%. Pola acak umum.',
-             v: { winRate: 55, winMin: 5, winMax: 25, loseMin: 3, loseMax: 12, winVolMin: 10000000, winVolMax: 150000000, loseVolMin: 10000000, loseVolMax: 150000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', minTrades: 1, maxTrades: 4 } },
-  besar:   { d: '<b>Besar:</b> 2–4 trade per hari, nilai besar (Rp100–325 jt), menang sekitar 50%. Untung dan risiko sama-sama lebih besar.',
-             v: { winRate: 50, winMin: 5, winMax: 25, loseMin: 3, loseMax: 10, winVolMin: 100000000, winVolMax: 325000000, loseVolMin: 100000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 3, stopAtTarget: '0', minTrades: 2, maxTrades: 4 } },
-  agresif: { d: '<b>Agresif:</b> transaksi sedikit (0–1 per hari), tiap trade sangat besar (Rp200–325 jt), selisih harga lebar naik maupun turun, menang 45%. Hasil sangat bervariasi: bisa untung besar, bisa rugi dalam. Lihat Monte Carlo.',
-             v: { winRate: 45, winMin: 10, winMax: 35, loseMin: 8, loseMax: 25, winVolMin: 200000000, winVolMax: 325000000, loseVolMin: 200000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', minTrades: 0, maxTrades: 1 } },
+  kecil:   { d: '<b>Kecil:</b> 1–2 trade per hari, nilai kecil (Rp5–50 jt), selisih harga tipis. Selalu menang, untung kecil; target 83% sulit dicapai.',
+             v: { winRate: 100, winMin: 4, winMax: 12, loseMin: 2, loseMax: 6, winVolMin: 5000000, winVolMax: 50000000, loseVolMin: 5000000, loseVolMax: 50000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', minTrades: 1, maxTrades: 2 } },
+  sedang:  { d: '<b>Sedang:</b> 1–4 trade per hari, nilai menengah (Rp10–150 jt), selalu menang. Pola acak umum.',
+             v: { winRate: 100, winMin: 5, winMax: 25, loseMin: 3, loseMax: 12, winVolMin: 10000000, winVolMax: 150000000, loseVolMin: 10000000, loseVolMax: 150000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', minTrades: 1, maxTrades: 4 } },
+  besar:   { d: '<b>Besar:</b> 2–4 trade per hari, nilai besar (Rp100–325 jt), selalu menang. Untung lebih besar.',
+             v: { winRate: 100, winMin: 5, winMax: 25, loseMin: 3, loseMax: 10, winVolMin: 100000000, winVolMax: 325000000, loseVolMin: 100000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', minTrades: 2, maxTrades: 4 } },
+  agresif: { d: '<b>Agresif:</b> transaksi sedikit (0–1 per hari), tiap trade sangat besar (Rp200–325 jt), selisih harga lebar, selalu menang. Counterparty selalu kalah.',
+             v: { winRate: 100, winMin: 10, winMax: 35, loseMin: 8, loseMax: 25, winVolMin: 200000000, winVolMax: 325000000, loseVolMin: 200000000, loseVolMax: 325000000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', minTrades: 0, maxTrades: 1 } },
 };
 function usePreset(k) {
   const pr = PRESETS[k]; Object.keys(pr.v).forEach(id => $(id).value = pr.v[id]);
