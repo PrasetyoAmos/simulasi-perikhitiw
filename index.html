@@ -50,6 +50,7 @@ main{min-width:0}
 .bp .bv{font-size:24px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}.bp .bd{font-size:12.5px;margin:2px 0 8px;color:var(--mut)}
 .br{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--line);font-size:13px;font-variant-numeric:tabular-nums}.br span:first-child{color:var(--mut)}
 .vbars{display:flex;align-items:flex-end;gap:2px;height:64px;margin:4px 0 2px}.vbars i{flex:1;background:var(--gk);opacity:.75;border-radius:2px 2px 0 0;min-width:2px}.vbars i.now{background:var(--win);opacity:1}
+.vbars i.warn{background:var(--tax)}.vbars i.bad{background:var(--lose);opacity:1}
 .vax{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-bottom:8px}
 .bt{margin-top:12px;overflow-x:auto}.bt table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}.bt th{color:var(--mut);font-weight:600;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}.bt td{text-align:right;padding:6px 8px;border-bottom:1px dashed var(--line)}.bt th:first-child,.bt td:first-child{text-align:left}
 .card h2{margin:0 0 12px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700}
@@ -206,6 +207,8 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
     <h2>2. Modal &amp; target</h2>
     <label>Dana MM5 (Rp)<span class="q" title="Modal awal yang dipakai MM5 untuk membeli koin">?</span></label><input id="capital" type="number" value="450000000">
     <label>Target laba bersih MM5 (Rp)<span class="q" title="Laba yang ingin dicapai, di luar modal. Default dari sel F4 Excel.">?</span></label><input id="target" type="number" value="373500000">
+    <label>Rata-rata volume GK per hari (Rp)<span class="q" title="Rata-rata volume harian GK tanpa MM5. Dipakai untuk cek batas anomali CFX.">?</span></label><input id="volBase" type="number" value="1000000000">
+    <label>Batas anomali CFX (× rata-rata 30 hari)<span class="q" title="Hari dengan volume sama atau lebih dari batas ini dari rata-rata 30 hari ditandai anomali oleh CFX. Dari data CFX, hari terendah yang ditandai ±5×.">?</span></label><input id="volLimit" type="number" step="0.1" value="5">
     <div class="row2">
       <div><label>Lama (hari)</label><input id="days" type="number" min="1" max="365" value="30"></div>
       <div><label>Kode acak<span class="q" title="Angka yang mengunci hasil acak. Kode sama = hasil sama persis. Tombol 'Acak ulang' menggantinya.">?</span></label><input id="seed" type="number" value="12345"></div>
@@ -323,11 +326,13 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
 <script src="sim.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const IDS = ['tradeMode','totalAmount','totalTrades','maxTradesT','capital','target','days','seed','minTrades','maxTrades','winVolMin','winVolMax','loseVolMin','loseVolMax','maxWinStreak','stopAtTarget','ensure','winRate','winMin','winMax','loseMin','loseMax','buyPrice','jitter','gk','pph','cfx'];
+const IDS = ['volBase','volLimit','tradeMode','totalAmount','totalTrades','maxTradesT','capital','target','days','seed','minTrades','maxTrades','winVolMin','winVolMax','loseVolMin','loseVolMax','maxWinStreak','stopAtTarget','ensure','winRate','winMin','winMax','loseMin','loseMax','buyPrice','jitter','gk','pph','cfx'];
 const DEFAULTS = {}; IDS.forEach(i => DEFAULTS[i] = $(i).value);
 
 /* ---------- ikon ? (penjelasan tiap fitur) ---------- */
 const TIPS = {
+  volBase: 'Rata-rata volume harian seluruh GK tanpa MM5 (dari data Oktober–November 2026 sekitar Rp1 M). Dipakai sebagai pembanding batas anomali.',
+  volLimit: 'Batas anomali CFX: volume harian dibanding rata-rata 30 hari terakhir. Dari file anomali CFX, hari terendah yang ditandai sekitar 5×.',
   capital: 'Modal awal MM5 untuk membeli koin. Laba dan ROI dihitung terhadap angka ini.',
   target: 'Laba bersih yang ingin dicapai MM5, di luar modal. Default Rp373,5 juta (sel F4 di Excel).',
   days: 'Berapa hari simulasi berjalan. Tiap hari ada beberapa trade.',
@@ -358,7 +363,7 @@ const TIPS = {
   speed: 'Seberapa cepat simulasi diputar. Tidak mengubah hasil, hanya kecepatan tampilan.',
 };
 const H2TIPS = [
-  ['Monitoring saldo', 'Kiri: saldo Rupiah MM5 (koin selalu dibeli lalu dijual habis, jadi tidak ada sisa koin). Kanan: volume transaksi yang tercipta di GK (nilai beli + nilai jual semua trade), per hari dan total. Batang hijau = hari berjalan.'],
+  ['Monitoring saldo', 'Kiri: saldo Rupiah MM5 (koin selalu dibeli lalu dijual habis, jadi tidak ada sisa koin). Kanan: volume transaksi yang tercipta di GK (nilai beli + nilai jual semua trade), per hari dan total. Batang hijau = hari berjalan, kuning = mendekati batas anomali CFX, merah = melewati batas (dibanding rata-rata 30 hari, dengan volume GK dasar dari pengaturan).'],
   ['1. Pilih pola', 'Pola jadi, mengisi semua pengaturan sekaligus: Mas Vino (sesuai Excel), Kecil, Sedang, Besar, Agresif. Setelah dipilih, semua angka masih bisa diubah manual di pengaturan lanjutan.'],
   ['2. Modal', 'Pengaturan dasar: modal, target laba, lama simulasi, dan kode acak.'],
   ['Trade saat ini', 'Menampilkan trade yang sedang berjalan. Satu trade = MM5 membeli koin dari counterparty, lalu menjualnya kembali. Hijau = menang, merah = kalah.'],
@@ -568,9 +573,13 @@ function draw(k) {
     const idr0 = p.capital, idr1 = st.cash, chk = idr0 - vol + gross - sf - tx, total = vol + gross;
     const dlt = (a, b) => `<span class="${cls(b - a)}">${b - a >= 0 ? '▲ +' : '▼ −'}${rp(Math.abs(b - a)).replace('−','')}</span>`;
     const row = (l, v, c) => `<div class="br"><span>${l}</span><span class="${c || ''}">${v}</span></div>`;
-    const active = dv.filter(v => v > 0).length, mx = Math.max(1, ...dv), bi = dv.indexOf(Math.max(...dv));
     const today = k ? s.trades[k-1].day : 0;
-    const bars = dv.map((v, i) => `<i class="${i + 1 === today ? 'now' : ''}" style="height:${Math.max(v ? 4 : 1, v / mx * 100)}%" title="Hari ${i + 1}: ${rp(v)} · ${dn[i]} trade"></i>`).join('');
+    const B = Math.max(1, parseFloat($('volBase').value) || 1e9), LIM = Math.max(1, parseFloat($('volLimit').value) || 5);
+    const ratio = dv.map((v, i) => { let sum = 0, c = 0; for (let j = Math.max(0, i - 30); j < i; j++) { sum += B + dv[j]; c++; } return (B + v) / (c ? sum / c : B); });
+    const rmax = Math.max(...ratio.slice(0, Math.max(1, today || 1))), rb = ratio.indexOf(Math.max(...ratio));
+    const active = dv.filter(v => v > 0).length, mx = Math.max(1, ...dv), bi = dv.indexOf(Math.max(...dv));
+    const bars = dv.map((v, i) => `<i class="${ratio[i] >= LIM ? 'bad' : ratio[i] >= LIM * 0.7 ? 'warn' : i + 1 === today ? 'now' : ''}" style="height:${Math.max(v ? 4 : 1, v / mx * 100)}%" title="Hari ${i + 1}: ${rp(v)} · ${dn[i]} trade · ${ratio[i].toFixed(2).replace('.', ',')}× rata-rata 30 hari"></i>`).join('');
+    const rmax2 = Math.max(...ratio), ok = rmax2 < LIM, near = rmax2 >= LIM * 0.7;
     const last = s.trades.slice(Math.max(0, k - 6), k).reverse().map(t => {
       const bef = t.cash - t.mm.pnl;
       return `<tr><td>#${t.no} h${t.day}</td><td>${rp(bef)}</td><td>${rp(bef - t.vol)}</td><td><b>${rp(t.cash)}</b></td><td>${rp(t.vol + t.gross)}</td></tr>`; }).join('');
@@ -582,7 +591,7 @@ function draw(k) {
         <div class="bv">${rp(total)}</div><div class="bd">total semua trade · ${kn(coin)} koin</div>
         <div class="vbars" title="Volume per hari">${bars}</div>
         <div class="vax"><span>hari 1</span><span>hari ${p.days}</span></div>
-        ${row('📅 Hari ini (hari ' + (today || '–') + ')', rp(today ? dv[today-1] : 0))}${row('📈 Rata-rata / hari aktif', rp(active ? total / active : 0))}${row('🔝 Tersibuk', active ? 'hari ' + (bi + 1) + ' · ' + rp(dv[bi]) : '–')}${row('🛒 Beli + 💰 Jual', rp(vol) + ' + ' + rp(gross))}</div>
+        ${row('📅 Hari ini (hari ' + (today || '–') + ')', rp(today ? dv[today-1] : 0))}${row('📈 Rata-rata / hari aktif', rp(active ? total / active : 0))}${row('🔝 Tersibuk', active ? 'hari ' + (bi + 1) + ' · ' + rp(dv[bi]) : '–')}${row('🛒 Beli + 💰 Jual', rp(vol) + ' + ' + rp(gross))}${row('🚨 Rasio tertinggi vs rata-rata 30 hari', (ok ? (near ? '⚠ ' : '✅ ') : '❌ ') + rmax2.toFixed(2).replace('.', ',') + '× (batas ' + LIM.toString().replace('.', ',') + '×) · hari ' + (ratio.indexOf(rmax2) + 1), ok ? (near ? '' : 'pos') : 'neg')}</div>
     </div>
     ${k ? `<div class="bt"><table class="plain mini2"><thead><tr><th>Trade</th><th>IDR sebelum</th><th>IDR setelah beli</th><th>IDR setelah jual</th><th>Volume trade</th></tr></thead><tbody>${last}</tbody></table></div>` : ''}`;
   })();
