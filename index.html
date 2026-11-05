@@ -44,6 +44,12 @@ main{min-width:0}
   .stat{margin-left:0}
 }
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.balg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}@media(max-width:760px){.balg{grid-template-columns:1fr}}
+.bp{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.bp .bh{font-weight:700;font-size:14px}.bp .bh small{color:var(--mut);font-weight:400;margin-left:6px}
+.bp .bv{font-size:24px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}.bp .bd{font-size:12.5px;margin:2px 0 8px;color:var(--mut)}
+.br{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--line);font-size:13px;font-variant-numeric:tabular-nums}.br span:first-child{color:var(--mut)}
+.bt{margin-top:12px;overflow-x:auto}.bt table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}.bt th{color:var(--mut);font-weight:600;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}.bt td{text-align:right;padding:6px 8px;border-bottom:1px dashed var(--line)}.bt th:first-child,.bt td:first-child{text-align:left}
 .card h2{margin:0 0 12px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700}
 main>*{margin-bottom:16px}
 aside .card{margin-bottom:12px}
@@ -285,6 +291,8 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
 
   <div class="kpis" id="kpis"></div>
 
+  <div class="card"><h2>Monitoring saldo MM5 (IDR &amp; koin)</h2><div id="bal"></div></div>
+
   <div class="grid2">
     <div class="card"><h2>Laba bersih MM5 dari waktu ke waktu</h2><div id="chartCum"></div>
       <div class="legend"><span><i style="background:#5b9cf5"></i>Laba kumulatif</span><span><i style="background:#f0b34a"></i>Target (garis putus-putus)</span></div></div>
@@ -348,6 +356,7 @@ const TIPS = {
   speed: 'Seberapa cepat simulasi diputar. Tidak mengubah hasil, hanya kecepatan tampilan.',
 };
 const H2TIPS = [
+  ['Monitoring saldo', 'Saldo MM5 saat ini: Rupiah (IDR) dan koin. Tiap trade, koin dibeli lalu dijual habis, jadi saldo koin kembali ke awal sedangkan saldo IDR berubah sebesar laba/rugi. Tabel bawah menunjukkan saldo setelah beli dan setelah jual untuk trade terakhir.'],
   ['1. Pilih pola', 'Pola jadi, mengisi semua pengaturan sekaligus: Mas Vino (sesuai Excel), Kecil, Sedang, Besar, Agresif. Setelah dipilih, semua angka masih bisa diubah manual di pengaturan lanjutan.'],
   ['2. Modal', 'Pengaturan dasar: modal, target laba, lama simulasi, dan kode acak.'],
   ['Trade saat ini', 'Menampilkan trade yang sedang berjalan. Satu trade = MM5 membeli koin dari counterparty, lalu menjualnya kembali. Hijau = menang, merah = kalah.'],
@@ -548,6 +557,27 @@ function draw(k) {
   const dAgg = Array.from({ length: p.days }, (_, i) => ({ day: i + 1, gk: 0, tax: 0, cfx: 0 }));
   for (let i = 0; i < k; i++) { const t = s.trades[i], d = dAgg[t.day-1]; d.gk += t.ex.gk; d.tax += t.ex.tax; d.cfx += t.ex.cfx; }
   stackChart($('chartInc'), dAgg, MAXINC);
+
+  // monitoring saldo MM5
+  (function () {
+    let vol = 0, gross = 0, sf = 0, tx = 0, cB = 0, cF = 0, cS = 0;
+    for (let i = 0; i < k; i++) { const t = s.trades[i]; vol += t.vol; gross += t.gross; sf += t.mm.sellGK + t.mm.sellCFX; tx += t.mm.sellTax; cB += t.E; cF += t.E - t.Enet; cS += t.Enet; }
+    const idr0 = p.capital, idr1 = st.cash, c0 = 0, c1 = (v => Math.abs(v) < 1e-6 ? 0 : v)(c0 + cB - cF - cS), chk = idr0 - vol + gross - sf - tx;
+    const dlt = (a, b) => `<span class="${cls(b - a)}">${b - a >= 0 ? '▲ +' : '▼ −'}${rp(Math.abs(b - a)).replace('−','')}</span>`;
+    const row = (l, v, c) => `<div class="br"><span>${l}</span><span class="${c || ''}">${v}</span></div>`;
+    const last = s.trades.slice(Math.max(0, k - 6), k).reverse().map(t => {
+      const bef = t.cash - t.mm.pnl;
+      return `<tr><td>#${t.no} h${t.day}</td><td>${rp(bef)}</td><td>${rp(bef - t.vol)}</td><td>${kn(t.Enet)}</td><td><b>${rp(t.cash)}</b></td><td>${kn(c0)}</td></tr>`; }).join('');
+    $('bal').innerHTML = `<div class="balg">
+      <div class="bp"><div class="bh">💵 IDR <small>saldo Rupiah</small></div>
+        <div class="bv">${rp(idr1)}</div><div class="bd">${dlt(idr0, idr1)} dari awal</div>
+        ${row('Awal', rp(idr0))}${row('🛒 Beli koin (modal berputar)', '−' + rp(vol).replace('−',''), 'neg')}${row('💰 Hasil jual', '+' + rp(gross), 'pos')}${row('🏦 Fee jual (GK+CFX)', '−' + rp(sf), 'neg')}${row('🏛 Pajak', '−' + rp(tx), 'neg')}${row('= Akhir', rp(chk))}</div>
+      <div class="bp"><div class="bh">🪙 KOIN <small>saldo koin</small></div>
+        <div class="bv">${kn(c1)} koin</div><div class="bd">≈ ${rp(c1 * (k ? s.trades[k-1].sell : p.buyPrice))} · dibeli lalu dijual habis</div>
+        ${row('Awal', kn(c0) + ' koin')}${row('🛒 Dibeli', '+' + kn(cB), 'pos')}${row('🏦 Fee beli (GK+CFX, dari koin)', '−' + kn(cF), 'neg')}${row('💰 Dijual', '−' + kn(cS), 'neg')}${row('= Akhir', kn(c1) + ' koin')}</div>
+    </div>
+    ${k ? `<div class="bt"><table class="plain mini2"><thead><tr><th>Trade</th><th>IDR sebelum</th><th>IDR setelah beli</th><th>Koin setelah beli</th><th>IDR setelah jual</th><th>Koin setelah jual</th></tr></thead><tbody>${last}</tbody></table></div>` : ''}`;
+  })();
 
   // pembukuan
   $('ledger').innerHTML = `<table class="plain"><tbody>
