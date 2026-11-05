@@ -94,6 +94,14 @@ aside details[open] summary{margin-bottom:4px;color:var(--txt)}
 .kpi .l{font-size:13px;color:var(--mut)}
 .kpi .v{font-size:21px;font-weight:750;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .kpi .s{font-size:12px;color:var(--mut);margin-top:3px}
+.kpi .sd{margin-top:10px;border-top:1px solid var(--line);font-size:12px}
+.kpi .sd .rw{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kpi .sd .rw:last-child{border-bottom:0;padding-bottom:0}
+.kpi .sd .tg{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.kpi .sd .tg.b{color:var(--win)}.kpi .sd .tg.j{color:var(--tax)}
+.kpi .sd .qv{white-space:nowrap;color:var(--mut);font-variant-numeric:tabular-nums}
+.kpi .sd .r{text-align:right;font-weight:650;color:var(--txt);font-variant-numeric:tabular-nums}
+.kpi .sd .r small{display:block;font-weight:400;color:var(--mut);font-size:11px}
 .kpi.gk{border-top:3px solid var(--gk)}.kpi.tax{border-top:3px solid var(--tax)}.kpi.cfx{border-top:3px solid var(--cfx)}
 .pos{color:var(--win)}.neg{color:var(--lose)}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr));gap:16px}
@@ -493,10 +501,10 @@ function draw(k) {
   const KP = [
     ['', 'Laba bersih MM5', `<span class="${cls(st.cum)}">${rp(st.cum)}</span>`, `${pct(roi)} dari modal · ekuitas ${rp(p.capital + st.cum)}`, 'Untung atau rugi MM5 setelah dikurangi semua fee dan pajak. Persen di bawahnya (ROI) = laba dibanding modal. Ekuitas = modal + laba.'],
     ['', 'Jumlah trade', `${st.n} <span style="font-size:13px;color:var(--mut)">(<span class="pos">${st.wins} menang</span> / <span class="neg">${st.losses} kalah</span>)</span>`, `menang ${st.n ? Math.round(st.wins/st.n*100) : 0}%${s.tot.skipped && done ? ' · ' + s.tot.skipped + ' dilewati (dana habis)' : ''}`, 'Satu trade = MM5 beli koin lalu jual ke counterparty. Menang/kalah ditentukan dari harga jual naik atau turun dibanding harga beli.'],
-    ['', 'Total nilai diperdagangkan', rp(st.turnover), `beli ${rp(st.buy)} + jual ${rp(st.sell)}`, 'Jumlah Rupiah yang berputar: nilai beli ditambah nilai jual dari semua trade. Fee dan pajak dihitung dari angka ini.'],
-    ['gk', 'Income exchange (fee GK)', rp(st.gk), `${kn(st.gkC)} koin (fee beli) + ${rp(st.gkR)} (fee jual)`, 'Pendapatan exchange dari fee transaksi, dari MM5 dan counterparty. Fee saat membeli diterima dalam KOIN, fee saat menjual diterima dalam Rupiah. Angka besar di kartu = total nilai setara Rupiah (koin dinilai di harga trade).'],
+    ['', 'Total nilai diperdagangkan', rp(st.turnover), {rows:[['b','Beli','',`${rp(st.buy)}`],['j','Jual','',`${rp(st.sell)}`]]}, 'Jumlah Rupiah yang berputar: nilai beli ditambah nilai jual dari semua trade. Fee dan pajak dihitung dari angka ini.'],
+    ['gk', 'Income exchange (fee GK)', rp(st.gk), {rows:[['b','Beli',`${kn(st.gkC)} koin`,`≈ ${rp(st.gk-st.gkR)}`],['j','Jual','dipotong dari Rp',`${rp(st.gkR)}`]]}, 'Pendapatan exchange dari fee transaksi, dari MM5 dan counterparty. Fee saat membeli diterima dalam KOIN, fee saat menjual diterima dalam Rupiah. Angka besar di kartu = total nilai setara Rupiah (koin dinilai di harga trade).'],
     ['tax', 'Pajak (PPN/PPh)', rp(st.tax), 'titipan untuk negara, bukan pendapatan', 'Pajak atas penjualan, dibayar penjual dan disetor ke negara. Bukan pendapatan exchange. Di Excel disebut PPH.'],
-    ['cfx', 'Fee CFX', rp(st.cfx), `${kn(st.cfxC)} koin (fee beli) + ${rp(st.cfxR)} (fee jual)`, 'Biaya ke bursa CFX dari pembeli dan penjual. Sisi beli dibayar dalam koin, sisi jual dalam Rupiah. Angka besar = total nilai setara Rupiah.'],
+    ['cfx', 'Fee CFX', rp(st.cfx), {rows:[['b','Beli',`${kn(st.cfxC)} koin`,`≈ ${rp(st.cfx-st.cfxR)}`],['j','Jual','dipotong dari Rp',`${rp(st.cfxR)}`]]}, 'Biaya ke bursa CFX dari pembeli dan penjual. Sisi beli dibayar dalam koin, sisi jual dalam Rupiah. Angka besar = total nilai setara Rupiah.'],
     ['', 'Penurunan terdalam MM5', rp(-st.dd), 'jarak terbesar dari laba tertinggi', 'Penurunan terbesar laba MM5 dari titik tertingginya. Makin kecil makin aman: menunjukkan seberapa dalam MM5 pernah "turun" sebelum naik lagi.'],
     ['', 'Kas MM5 sekarang', rp(st.cash), 'modal + laba bersih sejauh ini', 'Uang tunai MM5 saat ini: modal awal ditambah laba bersih sejauh ini. Trade berikutnya tidak bisa melebihi angka ini.'],
   ];
@@ -507,7 +515,9 @@ function draw(k) {
       '<div class="kgroup">Pendapatan &amp; biaya dari trade (kedua pihak)</div>' + ORDER.slice(4).map(card).join('');
     kp.querySelectorAll('.kpi').forEach((el, j) => addQ(el.querySelector('.l'), KP[ORDER[j]][4]));
   }
-  kp.querySelectorAll('.kpi').forEach((el, j) => { const k2 = KP[ORDER[j]]; el.querySelector('.v').innerHTML = k2[2]; el.querySelector('.s').textContent = k2[3]; });
+  kp.querySelectorAll('.kpi').forEach((el, j) => { const k2 = KP[ORDER[j]]; el.querySelector('.v').innerHTML = k2[2]; const se = el.querySelector('.s,.sd'), v3 = k2[3];
+    if (v3 && v3.rows) { se.className = 'sd'; se.style.marginTop = ''; se.innerHTML = v3.rows.map(r => `<div class="rw"><span class="tg ${r[0]}">${r[1]}</span><span class="qv">${r[2]}</span><span class="r">${r[3]}</span></div>`).join(''); }
+    else { se.className = 's'; se.textContent = v3; } });
 
   // progres
   const ratio = p.target > 0 ? Math.max(0, Math.min(1, st.cum / p.target)) : 0;
