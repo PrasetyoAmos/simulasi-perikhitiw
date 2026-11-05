@@ -131,6 +131,7 @@ table.data tbody tr.tr.open td{background-image:linear-gradient(#5b9cf522,#5b9cf
 tr.det{display:none}tr.open+tr.det{display:table-row}
 table.data tr.det td{padding:0;border-left:0;text-align:left;background:#0f1626;white-space:normal}
 .detbox{padding:12px 16px;position:sticky;left:0;max-width:min(100%,1100px)}
+.hint{color:var(--mut);font-size:12px;font-weight:400}
 .detsum{margin-top:8px;font-size:12.5px;color:var(--mut)}
 table.data table.mini{width:auto;min-width:760px;margin-top:8px}
 table.data table.mini th,table.data table.mini td{position:static;padding:6px 12px;text-align:right;border-left:0;border-bottom:1px solid var(--line);background:none!important;background-image:none!important;box-shadow:none;height:auto;line-height:1.4;font-size:12.5px;color:var(--txt)}
@@ -335,7 +336,7 @@ const H2TIPS = [
   ['Pendapatan exchange', 'Tiap batang = satu hari. Biru: fee GK (pendapatan exchange). Kuning: pajak (titipan negara). Ungu: fee CFX. Arahkan kursor ke batang untuk melihat angkanya.'],
   ['Peluang sebenarnya', 'Simulasi diulang 500 kali dengan kode acak berbeda. Ini menunjukkan peluang yang sesungguhnya, sedangkan grafik di atas hanya satu contoh. P10-P90: rentang tempat sebagian besar hasil berada.'],
   ['Siapa dapat apa', 'Pembagian uang dari semua trade: MM5, counterparty (dicatat terpisah, bukan modal MM5), exchange, negara, dan CFX. Total semua pihak mendekati nol karena uang hanya berpindah.'],
-  ['Rincian setiap trade', 'Satu baris = satu trade (beli lalu jual). Notional = nilai Rupiah (koin x harga). Klik baris untuk melihat langkah beli dan jual seperti di Excel. Fee GK, pajak, dan fee CFX adalah total dua sisi. Laba trade = hasil jual dikurangi biaya dan modal. Untung/rugi counterparty = lawan transaksi.'],
+  ['Rincian setiap trade', 'Satu baris = satu trade (beli lalu jual). Notional = nilai Rupiah (koin x harga). Klik baris untuk melihat langkah beli dan jual, sisi MM5 dan sisi counterparty. Fee GK, pajak, dan fee CFX adalah total dua sisi. Laba trade = hasil jual dikurangi biaya dan modal. Untung/rugi counterparty = lawan transaksi.'],
   ['Cek ke Excel', 'Mencocokkan hitungan dashboard dengan empat flow di Excel Mas Vino. "Gain cara Excel" memakai rumus asli Excel; "Laba bersih" juga mengurangkan pajak jual.'],
 ];
 function addQ(parent, tip) {
@@ -484,7 +485,7 @@ function draw(k) {
     `<div class="top">Hari ${tr.day} dari ${p.days} · trade ke-${tr.no} di hari ini${done ? ' · <b>simulasi selesai</b>' : ''}</div>
      <div class="main flash">MM5 <b>beli ${kn(tr.E)} koin</b> senilai <b>${rp(tr.vol)}</b> (harga Rp${Math.round(tr.buy).toLocaleString('id-ID')}/koin), lalu <b>jual ${kn(tr.Enet)} koin</b> senilai <b>${rp(tr.gross)}</b> (harga Rp${Math.round(tr.sell).toLocaleString('id-ID')}/koin, <b>${tr.move >= 0 ? '+' : ''}${(tr.move*100).toFixed(1).replace('.',',')}%</b>).</div>
      <div class="res flash"><small>${tr.win ? 'MENANG' : 'KALAH'}</small>${rp(tr.mm.pnl)}</div>
-     <div class="sub flash">Dari trade ini: fee GK ${rp(tr.ex.gk)} · pajak ${rp(tr.ex.tax)} · fee CFX ${rp(tr.ex.cfx)} (total dua sisi)</div>`;
+     <div class="sub flash">Counterparty: jual ${kn(tr.E)} koin ke MM5, beli kembali ${kn(tr.Enet)} koin, hasil <b class="${tr.cp.pnl>=0?'pos':'neg'}">${rp(tr.cp.pnl)}</b>. Dari trade ini: fee GK ${rp(tr.ex.gk)} · pajak ${rp(tr.ex.tax)} · fee CFX ${rp(tr.ex.cfx)} (total dua sisi)</div>`;
 
   // kartu ringkasan
   const roi = p.capital ? st.cum / p.capital : 0;
@@ -537,12 +538,23 @@ function draw(k) {
   const nr = v => (v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('id-ID');
   const sg = v => (v < 0 ? 'neg' : 'pos');
   const detail = x => {
-    const m = x.mm, netBuy = x.vol - m.buyGK - m.buyCFX, netSell = x.gross - m.sellGK - m.sellCFX;
-    return `<tr class="det"><td colspan="16"><div class="detbox"><b>Langkah trade ini (format Excel Mas Vino, sisi MM5)</b>
-      <table class="mini"><thead><tr><th>Step</th><th>Keterangan</th><th>Notional / Amount IDR</th><th>Rate per koin</th><th>Amount koin</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Net (cara Excel)</th></tr></thead><tbody>
+    const m = x.mm, c = x.cp, netBuy = x.vol - m.buyGK - m.buyCFX, netSell = x.gross - m.sellGK - m.sellCFX;
+    const cpIn = x.vol - c.sellGK - c.sellTax - c.sellCFX, cpOut = x.gross + c.buyGK + c.buyCFX;
+    const priceEff = -x.E * (x.sell - x.buy), cpCost = c.sellGK + c.sellTax + c.sellCFX + c.buyGK + c.buyCFX;
+    const head = '<thead><tr><th>Step</th><th>Keterangan</th><th>Notional / Amount IDR</th><th>Rate per koin</th><th>Amount koin</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Net</th></tr></thead>';
+    return `<tr class="det"><td colspan="16"><div class="detbox">
+      <b>Sisi MM5</b> <span class="hint">(format Excel Mas Vino)</span>
+      <table class="mini">${head.replace('<th>Net</th>', '<th>Net (cara Excel)</th>')}<tbody>
       <tr><td>1</td><td>MM5 membeli koin</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(m.buyGK)}</td><td>0</td><td>${nr(m.buyCFX)}</td><td>${nr(netBuy)}</td></tr>
       <tr><td>2</td><td>MM5 menjual koin</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(m.sellGK)}</td><td>${nr(m.sellTax)}</td><td>${nr(m.sellCFX)}</td><td>${nr(netSell)}</td></tr></tbody></table>
-      <div class="detsum">Gain cara Excel (net jual − net beli): <b class="${sg(m.excelGain)}">${nr(m.excelGain)}</b> · Laba bersih setelah pajak jual: <b class="${sg(m.pnl)}">${nr(m.pnl)}</b> · Koin terpotong sebagai fee beli: ${kn(x.E - x.Enet)} koin · Fee beli dibayar dalam koin, fee jual dan pajak dari hasil penjualan.</div></div></td></tr>`;
+      <div class="detsum">Gain cara Excel (net jual − net beli): <b class="${sg(m.excelGain)}">${nr(m.excelGain)}</b> · Laba bersih setelah pajak jual: <b class="${sg(m.pnl)}">${nr(m.pnl)}</b> · Koin terpotong sebagai fee beli: ${kn(x.E - x.Enet)} koin</div>
+      <div style="margin-top:14px"><b>Sisi counterparty</b> <span class="hint">(pihak independen, lawan MM5, dicatat terpisah)</span></div>
+      <table class="mini">${head.replace('<th>Net</th>', '<th>Net kas</th>')}<tbody>
+      <tr><td>1</td><td>Counterparty menjual koin ke MM5</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(c.sellGK)}</td><td>${nr(c.sellTax)}</td><td>${nr(c.sellCFX)}</td><td class="pos">+${nr(cpIn)}</td></tr>
+      <tr><td>2</td><td>Counterparty membeli koin dari MM5</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(c.buyGK)}</td><td>0</td><td>${nr(c.buyCFX)}</td><td class="neg">−${nr(cpOut)}</td></tr></tbody></table>
+      <div class="detsum">Hasil counterparty: <b class="${sg(c.pnl)}">${nr(c.pnl)}</b> = selisih harga <span class="${sg(priceEff)}">${nr(priceEff)}</span> (koin dijual di harga beli, dibeli kembali di harga jual) − fee &amp; pajak ${nr(cpCost)}. Counterparty menyerahkan ${kn(x.E)} koin dan menerima kembali ${kn(x.Enet)} koin; selisih ${kn(x.E - x.Enet)} koin diambil sebagai fee beli MM5 (nilai fee ini dihitung di harga jual).</div>
+      <div class="detsum">Pendapatan exchange dari trade ini: fee GK ${nr(x.ex.gk)} · pajak ${nr(x.ex.tax)} · fee CFX ${nr(x.ex.cfx)} (dua sisi).</div>
+    </div></td></tr>`;
   };
   const rowHtml = (x, isNew, i) => `<tr class="tr ${isNew ? 'new' : ''} ${i % 2 ? 'alt' : ''}" title="Klik untuk melihat langkah beli dan jual"><td>${x.day}</td><td>${x.no}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(x.vol)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(x.gross)}</td><td class="${x.move>=0?'pos':'neg'}">${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%</td><td class="ctr"><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td class="gs c-gk">${nr(x.ex.gk)}</td><td class="c-tax">${nr(x.ex.tax)}</td><td class="c-cfx">${nr(x.ex.cfx)}</td><td class="gs ${sg(x.mm.pnl)}">${nr(x.mm.pnl)}</td><td class="${sg(x.cum)}">${nr(x.cum)}</td><td class="gs ${sg(x.cp.pnl)}">${nr(x.cp.pnl)}</td></tr>` + detail(x);
   const shown = Math.min(k, 600);
@@ -557,7 +569,7 @@ function draw(k) {
     tb.insertAdjacentHTML('beforeend', s.trades.slice(ROWS, shown).map((x, i, a) => rowHtml(x, i === a.length - 1 && !done, ROWS + i)).join(''));
     ROWS = shown; $('tblw').scrollTop = $('tblw').scrollHeight;
   }
-  $('tblNote').textContent = `Klik baris untuk melihat langkah beli dan jual seperti di Excel. Notional = nilai Rupiah transaksi (jumlah koin x harga). Koin dijual lebih sedikit dari koin dibeli karena fee beli dipotong dalam koin. Fee GK, Pajak, dan Fee CFX adalah total dua sisi (MM5 + counterparty).${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
+  $('tblNote').textContent = `Klik baris untuk melihat langkah beli dan jual, sisi MM5 dan sisi counterparty. Notional = nilai Rupiah transaksi (jumlah koin x harga). Koin dijual lebih sedikit dari koin dibeli karena fee beli dipotong dalam koin. Fee GK, Pajak, dan Fee CFX adalah total dua sisi (MM5 + counterparty).${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
 }
 
 /* ---------- animasi ---------- */
@@ -580,8 +592,8 @@ function rerun() { prepare(); play(true); }
 
 function csv() {
   if (!last) return;
-  const h = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total','pajak_total','fee_cfx_total','laba_mm5','kumulatif_mm5','hasil_counterparty','kas_mm5'];
-  const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.E.toFixed(6),x.buy.toFixed(2),x.Enet.toFixed(6),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),x.cash.toFixed(2)].join(',')));
+  const h = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total','pajak_total','fee_cfx_total','laba_mm5','kumulatif_mm5','hasil_counterparty','cp_fee_gk','cp_pajak','cp_fee_cfx','kas_mm5'];
+  const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.E.toFixed(6),x.buy.toFixed(2),x.Enet.toFixed(6),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),(x.cp.sellGK+x.cp.buyGK).toFixed(2),x.cp.sellTax.toFixed(2),(x.cp.sellCFX+x.cp.buyCFX).toFixed(2),x.cash.toFixed(2)].join(',')));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
   a.download = 'simulasi-mm5.csv'; a.click(); URL.revokeObjectURL(a.href);
