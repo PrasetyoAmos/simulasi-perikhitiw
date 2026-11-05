@@ -56,14 +56,23 @@
     let cash = p.capital, cum = 0, peak = 0, maxDD = 0;
     const trades = [], days = [];
     const tot = { gk: 0, tax: 0, cfx: 0, turnover: 0, cpPnl: 0, wins: 0, losses: 0, skipped: 0 };
-    let hitDay = null;
+    let hitDay = null, streak = 0;
 
     for (let d = 1; d <= p.days; d++) {
+      if (p.stopAtTarget && hitDay !== null) {   // target sudah tercapai: tidak trade lagi
+        days.push({ day: d, n: 0, gk: 0, tax: 0, cfx: 0, pnl: 0, cum, cash }); continue;
+      }
       const n = randInt(r, p.minTrades, p.maxTrades);
       const day = { day: d, n: 0, gk: 0, tax: 0, cfx: 0, pnl: 0 };
       for (let i = 1; i <= n; i++) {
-        const volWanted = logUni(r, p.volMin, p.volMax);
-        const win = r() < p.winRate;
+        const u = r();
+        let win = r() < p.winRate;
+        // MM5 tidak boleh menang terus-menerus: setelah N menang beruntun, trade berikutnya kalah
+        if (p.maxWinStreak > 0 && streak >= p.maxWinStreak) win = false;
+        streak = win ? streak + 1 : 0;
+        const vMin = win ? (p.winVolMin || p.volMin) : (p.loseVolMin || p.volMin);
+        const vMax = win ? (p.winVolMax || p.volMax) : (p.loseVolMax || p.volMax);
+        const volWanted = Math.exp(Math.log(vMin) + (Math.log(vMax) - Math.log(vMin)) * u);
         const move = win ? uni(r, p.winMin, p.winMax) : -uni(r, p.loseMin, p.loseMax);
         const buy = p.buyPrice * (1 + p.jitter * (r() * 2 - 1));
         const sell = buy * (1 + move);
@@ -71,18 +80,32 @@
         if (vol < p.volMin * 0.1) { tot.skipped++; continue; }   // dana habis
         const f = flow(vol, buy, sell, rate);
         cash += f.mm.pnl; cum += f.mm.pnl;
+        if (hitDay === null && cum >= p.target) hitDay = d;
         peak = Math.max(peak, cum); maxDD = Math.max(maxDD, peak - cum);
         win ? tot.wins++ : tot.losses++;
         tot.gk += f.ex.gk; tot.tax += f.ex.tax; tot.cfx += f.ex.cfx;
         tot.turnover += f.turnover; tot.cpPnl += f.cp.pnl;
         day.n++; day.gk += f.ex.gk; day.tax += f.ex.tax; day.cfx += f.ex.cfx; day.pnl += f.mm.pnl;
         trades.push({ day: d, no: i, vol, buy, sell, move, win, cash, cum, ...f });
+        if (p.stopAtTarget && hitDay !== null) break;
       }
       day.cum = cum; day.cash = cash;
-      if (hitDay === null && cum >= p.target) hitDay = d;
       days.push(day);
     }
     return { trades, days, tot, final: cum, cash, maxDD, hitDay };
+  }
+
+  /* Cari satu jalur simulasi yang berakhir >= minFinal (seed digeser berurutan).
+   * Ini memilih contoh, bukan menghitung peluang. Peluang sebenarnya ada di monteCarlo. */
+  function simulateEnding(p, seed, minFinal, maxTries) {
+    maxTries = maxTries || 3000;
+    let best = null;
+    for (let k = 0; k < maxTries; k++) {
+      const s = simulate(p, seed + 104729 * k);
+      if (!best || s.final > best.final) { best = s; best.seedUsed = seed + 104729 * k; best.tries = k + 1; }
+      if (s.final >= minFinal) { s.seedUsed = seed + 104729 * k; s.tries = k + 1; s.found = true; return s; }
+    }
+    best.found = false; best.tries = maxTries; return best;
   }
 
   function monteCarlo(p, seed, n) {
@@ -101,7 +124,7 @@
              min: sorted[0], max: sorted[n - 1], avgDD: ddSum / n };
   }
 
-  const api = { mulberry32, flow, simulate, monteCarlo };
+  const api = { mulberry32, flow, simulate, simulateEnding, monteCarlo };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Sim = api;
 })(typeof window !== 'undefined' ? window : globalThis);

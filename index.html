@@ -20,8 +20,8 @@ header p{margin:4px 0 0;color:var(--mut);max-width:980px}
 .card h2{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);font-weight:600}
 aside .card{margin-bottom:12px}
 label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
-input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:6px 8px;font:inherit}
-input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:6px 8px;font:inherit}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 button{background:var(--accent);color:#08101f;border:0;border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;cursor:pointer}
 button.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
@@ -63,6 +63,14 @@ details summary{cursor:pointer;color:var(--mut)}
 <div class="wrap">
 <aside>
   <div class="card">
+    <h2>Pola simulasi</h2>
+    <div class="btns" style="margin-top:0">
+      <button class="sec" id="pVino">Seperti Excel Mas Vino</button>
+      <button class="sec" id="pUmum">Umum (acak)</button>
+    </div>
+    <p class="note">Mas Vino: flow menang besar (Rp200–325 jt) di harga jauh di atas rata-rata, flow kalah kecil. MM5 sering kalah, tapi saldo akhir untung.</p>
+  </div>
+  <div class="card">
     <h2>Modal &amp; target</h2>
     <label>Dana MM5 (Rp)</label><input id="capital" type="number" value="450000000">
     <label>Target laba bersih MM5 (Rp)</label><input id="target" type="number" value="373500000">
@@ -78,10 +86,17 @@ details summary{cursor:pointer;color:var(--mut)}
       <div><label>Maks trade/hari</label><input id="maxTrades" type="number" min="0" max="4" value="4"></div>
     </div>
     <div class="row2">
-      <div><label>Volume min (Rp)</label><input id="volMin" type="number" value="10000000"></div>
-      <div><label>Volume maks (Rp)</label><input id="volMax" type="number" value="150000000"></div>
+      <div><label>Volume saat menang, min (Rp)</label><input id="winVolMin" type="number" value="10000000"></div>
+      <div><label>Volume saat menang, maks (Rp)</label><input id="winVolMax" type="number" value="150000000"></div>
+      <div><label>Volume saat kalah, min (Rp)</label><input id="loseVolMin" type="number" value="10000000"></div>
+      <div><label>Volume saat kalah, maks (Rp)</label><input id="loseVolMax" type="number" value="150000000"></div>
     </div>
-    <p class="note">Volume tiap trade diacak (skala log, jadi nominal kecil lebih sering) dan dibatasi saldo kas MM5.</p>
+    <label>Maks menang beruntun (0 = bebas)</label><input id="maxWinStreak" type="number" min="0" value="0">
+    <label>Setelah target tercapai</label>
+    <select id="stopAtTarget"><option value="0">Terus trade sampai hari terakhir</option><option value="1">Berhenti trade</option></select>
+    <label>Contoh simulasi yang ditampilkan</label>
+    <select id="ensure"><option value="none">Acak apa adanya</option><option value="profit">Pilih contoh yang berakhir untung</option><option value="target">Pilih contoh yang mencapai target</option></select>
+    <p class="note">Volume tiap trade diacak (skala log, jadi nominal kecil lebih sering) dan dibatasi saldo kas MM5. "Pilih contoh" hanya memilih satu jalur dari banyak simulasi; peluang sebenarnya lihat panel Monte Carlo.</p>
   </div>
   <div class="card">
     <h2>Peluang menang &amp; selisih harga</h2>
@@ -148,7 +163,7 @@ details summary{cursor:pointer;color:var(--mut)}
 <script src="sim.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const IDS = ['capital','target','days','seed','minTrades','maxTrades','volMin','volMax','winRate','winMin','winMax','loseMin','loseMax','buyPrice','jitter','gk','pph','cfx'];
+const IDS = ['capital','target','days','seed','minTrades','maxTrades','winVolMin','winVolMax','loseVolMin','loseVolMax','maxWinStreak','stopAtTarget','ensure','winRate','winMin','winMax','loseMin','loseMax','buyPrice','jitter','gk','pph','cfx'];
 const DEFAULTS = {}; IDS.forEach(i => DEFAULTS[i] = $(i).value);
 
 const rp = n => (n < 0 ? '−Rp' : 'Rp') + Math.abs(Math.round(n)).toLocaleString('id-ID');
@@ -159,10 +174,13 @@ function params() {
   const v = id => parseFloat($(id).value) || 0;
   let minT = Math.max(0, Math.min(4, Math.round(v('minTrades')))), maxT = Math.max(0, Math.min(4, Math.round(v('maxTrades'))));
   if (minT > maxT) minT = maxT;
-  const volMin = Math.max(1, v('volMin')), volMax = Math.max(volMin, v('volMax'));
+  const wvMin = Math.max(1, v('winVolMin')), wvMax = Math.max(wvMin, v('winVolMax'));
+  const lvMin = Math.max(1, v('loseVolMin')), lvMax = Math.max(lvMin, v('loseVolMax'));
+  const volMin = Math.min(wvMin, lvMin), volMax = Math.max(wvMax, lvMax);
   const wmin = v('winMin')/100, wmax = Math.max(wmin, v('winMax')/100), lmin = v('loseMin')/100, lmax = Math.max(lmin, v('loseMax')/100);
   return { capital: v('capital'), target: v('target'), days: Math.max(1, Math.min(365, Math.round(v('days')))),
-    minTrades: minT, maxTrades: maxT, volMin, volMax,
+    minTrades: minT, maxTrades: maxT, volMin, volMax, winVolMin: wvMin, winVolMax: wvMax, loseVolMin: lvMin, loseVolMax: lvMax,
+    maxWinStreak: Math.max(0, Math.round(v('maxWinStreak'))), stopAtTarget: $('stopAtTarget').value === '1', ensure: $('ensure').value,
     winRate: Math.max(0, Math.min(1, v('winRate')/100)), winMin: wmin, winMax: wmax, loseMin: lmin, loseMax: Math.min(lmax, 0.99),
     buyPrice: Math.max(1, v('buyPrice')), jitter: v('jitter')/100,
     gk: v('gk')/100, pph: v('pph')/100, cfx: v('cfx')/100, seed: Math.round(v('seed')) };
@@ -224,7 +242,8 @@ function histChart(el, finals, target) {
 let last = null;
 function render() {
   const p = params();
-  const s = Sim.simulate(p, p.seed);
+  const s = p.ensure === 'none' ? Sim.simulate(p, p.seed)
+    : Sim.simulateEnding(p, p.seed, p.ensure === 'target' ? p.target : 1);
   last = { p, s };
   const t = s.tot, nTr = s.trades.length, roi = p.capital ? s.final / p.capital : 0;
   const incTotal = t.gk + t.tax + t.cfx;
@@ -243,9 +262,10 @@ function render() {
   const pct = p.target > 0 ? Math.max(0, Math.min(1, s.final / p.target)) : 0;
   $('progressBar').style.width = (pct*100) + '%';
   $('progressBar').style.background = s.final >= p.target ? 'var(--win)' : 'var(--accent)';
-  $('progressText').innerHTML = s.final >= p.target
-    ? `<b class="pos">Target tercapai</b> pada hari ke-${s.hitDay}. Laba ${rp(s.final)} dari target ${rp(p.target)}.`
-    : `<b>Target belum tercapai.</b> Laba ${rp(s.final)} (${(pct*100).toFixed(1).replace('.',',')}% dari target ${rp(p.target)}). Kurang ${rp(p.target - s.final)}. Target setara ROI ${(p.capital ? p.target/p.capital*100 : 0).toFixed(0)}% dari dana MM5.`;
+  const pick = p.ensure === 'none' ? '' : `<div class="note">Contoh ini dipilih dari ${s.tries} simulasi acak${s.found === false ? ' (tidak ada yang memenuhi, ditampilkan yang terbaik)' : ''}. Ini satu jalur yang mungkin terjadi, bukan perkiraan hasil; lihat Monte Carlo untuk peluang.</div>`;
+  $('progressText').innerHTML = pick + (s.final >= p.target
+    ? `<b class="pos">Target tercapai</b> pada hari ke-${s.hitDay}${s.hitDay && p.stopAtTarget ? ', trade dihentikan' : ''}. Laba ${rp(s.final)} dari target ${rp(p.target)}.`
+    : `<b>Target belum tercapai.</b> Laba ${rp(s.final)} (${(pct*100).toFixed(1).replace('.',',')}% dari target ${rp(p.target)}). Kurang ${rp(p.target - s.final)}. Target setara ROI ${(p.capital ? p.target/p.capital*100 : 0).toFixed(0)}% dari dana MM5.`);
 
   lineChart($('chartCum'), s.days.map(d => d.cum), p.target, p.days);
   stackChart($('chartInc'), s.days);
@@ -290,10 +310,13 @@ function csv() {
 }
 
 let timer;
-IDS.forEach(i => $(i).addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(render, 120); }));
+IDS.forEach(i => $(i).addEventListener($(i).tagName === 'SELECT' ? 'change' : 'input', () => { clearTimeout(timer); timer = setTimeout(render, 120); }));
 $('reroll').onclick = () => { $('seed').value = Math.floor(Math.random() * 1e9); render(); };
 $('reset').onclick = () => { IDS.forEach(i => $(i).value = DEFAULTS[i]); render(); };
 $('csv').onclick = csv;
+function setP(o) { Object.keys(o).forEach(k => $(k).value = o[k]); render(); }
+$('pVino').onclick = () => setP({ winRate: 40, winMin: 9.3, winMax: 38.7, loseMin: 3, loseMax: 5, winVolMin: 200000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 10000000, buyPrice: 205000, jitter: 0, maxWinStreak: 3, stopAtTarget: '1', ensure: 'none', minTrades: 1, maxTrades: 4 });
+$('pUmum').onclick = () => setP({ winRate: 55, winMin: 5, winMax: 25, loseMin: 3, loseMax: 12, winVolMin: 10000000, winVolMax: 150000000, loseVolMin: 10000000, loseVolMax: 150000000, buyPrice: 205000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', ensure: 'none', minTrades: 1, maxTrades: 4 });
 render();
 </script>
 </body>
