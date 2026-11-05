@@ -6,45 +6,71 @@
 <title>Simulasi MM5 – income exchange, pajak, dan fee CFX</title>
 <style>
 :root{
-  --bg:#0f1420;--panel:#171e2e;--panel2:#1d263a;--line:#2a3550;--txt:#e6ebf5;--mut:#9aa6bf;
+  --bg:#0d121d;--panel:#161d2d;--panel2:#1c2538;--line:#27324b;--txt:#e8edf7;--mut:#9aa6bf;
   --win:#34c78a;--lose:#ef6a6a;--gk:#5b9cf5;--tax:#f0b34a;--cfx:#b48cf2;--accent:#5b9cf5;
+  --bar:60px;--side:340px;--r:14px;
 }
 *{box-sizing:border-box}
+html{scroll-padding-top:70px}
 body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{padding:18px 24px 4px}
-h1{margin:0;font-size:21px}
-header p{margin:4px 0 8px;color:var(--mut);max-width:980px}
-.how{max-width:980px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin-bottom:6px}
-.how summary{cursor:pointer;font-weight:600}
-.how ol{margin:8px 0 4px;padding-left:20px;color:var(--mut)}.how li{margin:3px 0}
-.wrap{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:12px 24px 40px;align-items:start}
-@media(max-width:980px){.wrap{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.card h2{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);font-weight:600}
-aside .card{margin-bottom:12px}
-label{display:block;font-size:12.5px;color:var(--mut);margin:9px 0 3px}
-.q{display:inline-block;position:relative;width:16px;height:16px;line-height:15px;text-align:center;border-radius:50%;background:var(--panel2);border:1px solid #3a4a70;font-size:10px;font-weight:700;margin-left:6px;cursor:help;color:var(--accent);text-transform:none;letter-spacing:0;vertical-align:1px}
-.q:hover,.q:focus,.q.open{background:var(--accent);color:#08101f;outline:none}
-.q:hover::after,.q:focus::after,.q.open::after{content:attr(data-tip);position:absolute;z-index:50;top:22px;left:-12px;width:250px;padding:9px 11px;background:#0a0f1a;color:var(--txt);border:1px solid var(--accent);border-radius:8px;font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;box-shadow:0 8px 24px #000a}
-.q.flip:hover::after,.q.flip:focus::after,.q.flip.open::after{left:auto;right:-12px}
-input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 8px;font:inherit}
-input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-button{background:var(--accent);color:#08101f;border:0;border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;cursor:pointer}
+/* ===== app bar ===== */
+.appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 16px 10px;background:#0d121dee;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:16px;margin-right:6px;white-space:nowrap}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--mut)}
+.pbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pbar label{margin:0 -2px 0 6px}
+.pbar select{width:auto;padding:6px 8px}
+.stat{margin-left:auto;color:var(--mut);font-size:13px;white-space:nowrap}
+.tline{position:absolute;left:0;right:0;bottom:-1px;height:3px;background:transparent}
+.tline>div{height:100%;background:var(--accent);width:0;transition:width .15s}
+button{background:var(--accent);color:#08101f;border:0;border-radius:9px;padding:8px 13px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
 button.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
 button:hover{filter:brightness(1.12)}
-.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-aside details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:12px}
-aside details summary{cursor:pointer;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);font-weight:600}
-.note{font-size:12px;color:var(--mut);margin:8px 0 0}
-/* kontrol animasi */
-.ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ctrl select{width:auto}
-.ctrl .stat{margin-left:auto;color:var(--mut);font-size:13px}
-.tline{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:10px}
-.tline>div{height:100%;background:var(--accent);width:0;transition:width .15s}
-/* ticker */
-.tk{min-height:112px;display:grid;grid-template-columns:1fr auto;gap:6px 18px;align-items:center}
+button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* ===== layout ===== */
+.wrap{display:grid;grid-template-columns:var(--side) minmax(0,1fr);gap:0;padding:14px 18px 48px;align-items:start;transition:grid-template-columns .3s ease}
+body.menu-closed .wrap{--side:0px}
+aside{position:sticky;top:calc(var(--bar) + 14px);height:calc(100vh - var(--bar) - 28px);overflow:hidden;transition:opacity .25s}
+.sidein{width:calc(var(--sidew,340px) - 16px);height:100%;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+body.menu-closed aside{opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .3s}
+main{min-width:0}
+.backdrop{display:none}
+@media(max-width:980px){
+  .wrap{grid-template-columns:minmax(0,1fr);padding:12px}
+  aside{position:fixed;z-index:60;left:0;top:0;bottom:0;height:auto;width:min(350px,92vw);background:var(--bg);padding:12px 8px 12px 12px;transform:translateX(-105%);transition:transform .3s;opacity:1;visibility:visible;border-right:1px solid var(--line)}
+  body.menu-open aside{transform:none}
+  .sidein{width:100%}
+  body.menu-open .backdrop{display:block;position:fixed;inset:0;background:#000a;z-index:55}
+  .stat{margin-left:0}
+}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.card h2{margin:0 0 12px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700}
+main>*{margin-bottom:16px}
+aside .card{margin-bottom:12px}
+label{display:block;font-size:12.5px;color:var(--mut);margin:10px 0 4px}
+.q{display:inline-block;position:relative;width:16px;height:16px;line-height:15px;text-align:center;border-radius:50%;background:var(--panel2);border:1px solid #3a4a70;font-size:10px;font-weight:700;margin-left:6px;cursor:help;color:var(--accent);text-transform:none;letter-spacing:0;vertical-align:1px}
+.q:hover,.q:focus,.q.open{background:var(--accent);color:#08101f;outline:none}
+.q:hover::after,.q:focus::after,.q.open::after{content:attr(data-tip);position:absolute;z-index:70;top:22px;left:-12px;width:250px;padding:9px 11px;background:#0a0f1a;color:var(--txt);border:1px solid var(--accent);border-radius:8px;font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;box-shadow:0 8px 24px #000a}
+.q.flip:hover::after,.q.flip:focus::after,.q.flip.open::after{left:auto;right:-12px}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 9px;font:inherit}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+aside details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-bottom:12px}
+aside details summary{cursor:pointer;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700}
+aside details[open] summary{margin-bottom:4px;color:var(--txt)}
+.note{font-size:12px;color:var(--mut);margin:10px 0 0}
+/* ===== intro ===== */
+.intro{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.intro h1{margin:0;font-size:22px}
+.intro p{margin:6px 0 0;color:var(--mut);max-width:760px}
+.how{flex:1 1 320px;max-width:460px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+.how summary{cursor:pointer;font-weight:600}
+.how ol{margin:8px 0 4px;padding-left:20px;color:var(--mut)}.how li{margin:4px 0}
+/* ===== ticker & progres ===== */
+.duo{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px}
+@media(max-width:1100px){.duo{grid-template-columns:1fr}}
+.tk{min-height:104px;display:grid;grid-template-columns:1fr auto;gap:6px 18px;align-items:center}
 .tk .top{grid-column:1/-1;color:var(--mut);font-size:13px}
 .tk .main{font-size:16px}
 .tk .res{font-size:26px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
@@ -53,53 +79,80 @@ aside details summary{cursor:pointer;font-size:13px;letter-spacing:.04em;text-tr
 .tk.w .res{color:var(--win)}.tk.l .res{color:var(--lose)}
 .tk .flash{animation:flash .6s ease-out}
 @keyframes flash{from{opacity:.2;transform:translateY(6px)}to{opacity:1;transform:none}}
-.tkbox.w{box-shadow:0 0 0 1px #34c78a55 inset}.tkbox.l{box-shadow:0 0 0 1px #ef6a6a55 inset}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.kpi .l{font-size:12.5px;color:var(--mut)}
-.kpi .v{font-size:20px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
-.kpi .s{font-size:12px;color:var(--mut);margin-top:2px}
+.tkbox{border-left:4px solid var(--line)}
+.tkbox.w{border-left-color:var(--win)}.tkbox.l{border-left-color:var(--lose)}
+.bar{height:10px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:10px}
+.bar>div{height:100%;transition:width .25s}
+/* ===== kartu ringkasan ===== */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media(max-width:1250px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kgroup{grid-column:1/-1;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:6px 0 -2px}
+.kgroup:first-child{margin-top:0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.kpi .l{font-size:13px;color:var(--mut)}
+.kpi .v{font-size:21px;font-weight:750;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi .s{font-size:12px;color:var(--mut);margin-top:3px}
 .kpi.gk{border-top:3px solid var(--gk)}.kpi.tax{border-top:3px solid var(--tax)}.kpi.cfx{border-top:3px solid var(--cfx)}
 .pos{color:var(--win)}.neg{color:var(--lose)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-@media(max-width:1250px){.grid2{grid-template-columns:1fr}}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr));gap:16px}
 svg{width:100%;height:auto;display:block}
 svg text{fill:var(--mut);font-size:11px}
 .pulse{animation:pulse 1s ease-out infinite}
 @keyframes pulse{from{r:4;opacity:1}to{r:11;opacity:0}}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:6px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.tbl{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:8px}
-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;white-space:nowrap}
-th,td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--line)}
-th{position:sticky;top:0;background:var(--panel2);color:var(--mut);font-weight:600;font-size:12px}
-th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
-tr.new td{animation:rowin .8s ease-out}
-@keyframes rowin{from{background:#5b9cf544}to{background:transparent}}
-.tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;font-weight:700}
+.big2{font-size:19px;font-weight:700}
+/* ===== tabel data ===== */
+.tbl{overflow:auto;max-height:480px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.plain td{padding:7px 0;border-bottom:1px solid var(--line)}
+table.plain td:last-child{text-align:right}
+table.data th,table.data td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);border-left:1px solid #222c44}
+table.data th:first-child,table.data td:first-child{border-left:0}
+table.data td:nth-child(1),table.data th:nth-child(1),table.data td:nth-child(2),table.data th:nth-child(2){text-align:left}
+table.data th{position:sticky;background:var(--panel2);color:var(--mut);font-weight:700;font-size:12px;z-index:2}
+table.data tr.grp th{top:0;height:32px;padding:0 10px;line-height:32px;text-align:center;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--txt);border-bottom:1px solid #3a4a70}
+table.data tr.cols th{top:32px;height:34px;padding-top:0;padding-bottom:0;border-bottom:2px solid #3a4a70}
+table.solo tr.cols th{top:0}
+table.data .gs{border-left:2px solid #3a4a70!important}
+table.data tr.grp th.g-trade{background:#222e4a}
+table.data tr.grp th.g-fee{background:#1f2f4d}
+table.data tr.grp th.g-mm{background:#1f3a3a}
+table.data tr.grp th.g-cp{background:#3a2a38}
+table.data .c-gk{background:#5b9cf50c}table.data .c-tax{background:#f0b34a0c}table.data .c-cfx{background:#b48cf20c}
+table.data th.c-gk{box-shadow:inset 0 -3px 0 var(--gk);background:#233654}
+table.data th.c-tax{box-shadow:inset 0 -3px 0 var(--tax);background:#3a3550}
+table.data th.c-cfx{box-shadow:inset 0 -3px 0 var(--cfx);background:#34305a}
+table.data tbody tr:nth-child(even) td{background-image:linear-gradient(#ffffff08,#ffffff08)}
+table.data tbody tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9cf51a)}
+table.data td.ctr,table.data th.ctr{text-align:center}
+tr.new td{animation:rowin .9s ease-out}
+@keyframes rowin{from{background-color:#5b9cf555}to{background-color:transparent}}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
 .tag.w{background:#34c78a26;color:var(--win)}.tag.l{background:#ef6a6a26;color:var(--lose)}
-.bar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:8px}
-.bar>div{height:100%;transition:width .25s}
-.big2{font-size:18px;font-weight:700}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<header>
-  <h1>Simulasi MM5: berapa yang didapat exchange, negara, dan CFX?</h1>
-  <p>Simulasi acak, bukan data transaksi sebenarnya. Setiap hari ada maksimal 4 trade, nilainya berbeda-beda, dan tidak semuanya menang. Counterparty (lawan transaksi) adalah pihak independen, hasilnya dicatat terpisah.</p>
-  <details class="how"><summary>Cara membaca dashboard ini (30 detik)</summary>
-    <ol>
-      <li>Pilih <b>Pola simulasi</b> di kiri, lalu atur modal, target, dan jumlah hari. Simulasi langsung berjalan.</li>
-      <li>Lihat kartu <b>"Trade saat ini"</b>: tiap trade = MM5 membeli koin lalu menjualnya ke counterparty. Hijau = menang, merah = kalah.</li>
-      <li>Angka di kartu, grafik, dan tabel bertambah seiring trade berjalan. Gunakan tombol Jeda, kecepatan, atau "Langsung selesai".</li>
-      <li>Yang dihitung: <b>laba bersih MM5</b>, <b>income exchange</b> (fee GK), <b>pajak</b> (titipan negara), dan <b>fee CFX</b>.</li>
-      <li>Panel <b>Monte Carlo</b> mengulang simulasi 500 kali untuk melihat peluang capai target, bukan sekadar satu contoh.</li>
-    </ol></details>
-</header>
+<div class="appbar">
+  <button class="sec" id="menuBtn" title="Tampilkan / sembunyikan menu (tombol M)" aria-controls="side" aria-expanded="true">☰ Menu</button>
+  <div class="brand">Simulasi MM5<small>income exchange · pajak · fee CFX</small></div>
+  <div class="pbar">
+    <button id="play">▶ Putar ulang</button>
+    <button class="sec" id="pause">⏸ Jeda</button>
+    <button class="sec" id="skip">⏭ Selesai</button>
+    <label>Kecepatan</label>
+    <select id="speed"><option value="1">Pelan</option><option value="3" selected>Sedang</option><option value="8">Cepat</option><option value="20">Sangat cepat</option></select>
+  </div>
+  <span class="stat" id="stat"></span>
+  <button class="sec" id="fs" title="Layar penuh (tombol F)">⛶ Layar penuh</button>
+  <div class="tline"><div id="tl"></div></div>
+</div>
+<div class="backdrop" id="backdrop"></div>
 
 <div class="wrap">
-<aside>
+<aside id="side"><div class="sidein">
   <div class="card">
     <h2>1. Pilih pola</h2>
     <div class="btns" style="margin-top:0">
@@ -113,7 +166,7 @@ tr.new td{animation:rowin .8s ease-out}
     <label>Dana MM5 (Rp)<span class="q" title="Modal awal yang dipakai MM5 untuk membeli koin">?</span></label><input id="capital" type="number" value="450000000">
     <label>Target laba bersih MM5 (Rp)<span class="q" title="Laba yang ingin dicapai, di luar modal. Default dari sel F4 Excel.">?</span></label><input id="target" type="number" value="373500000">
     <div class="row2">
-      <div><label>Lama simulasi (hari)</label><input id="days" type="number" min="1" max="365" value="30"></div>
+      <div><label>Lama (hari)</label><input id="days" type="number" min="1" max="365" value="30"></div>
       <div><label>Kode acak<span class="q" title="Angka yang mengunci hasil acak. Kode sama = hasil sama persis. Tombol 'Acak ulang' menggantinya.">?</span></label><input id="seed" type="number" value="12345"></div>
     </div>
     <div class="btns"><button id="reroll">Acak ulang</button><button class="sec" id="reset">Reset</button></div>
@@ -160,30 +213,31 @@ tr.new td{animation:rowin .8s ease-out}
     <p class="note">Tarif disalin dari draft Excel dan belum diverifikasi sebagai tarif berlaku.</p>
   </details>
   <div class="card"><button class="sec" id="csv" style="width:100%">Unduh rincian trade (CSV)</button></div>
-</aside>
+</div></aside>
 
 <main>
-  <div class="card">
-    <div class="ctrl">
-      <button id="play">▶ Putar ulang</button>
-      <button class="sec" id="pause">⏸ Jeda</button>
-      <button class="sec" id="skip">⏭ Langsung selesai</button>
-      <label style="margin:0">Kecepatan</label>
-      <select id="speed"><option value="1">Pelan</option><option value="3" selected>Sedang</option><option value="8">Cepat</option><option value="20">Sangat cepat</option></select>
-      <span class="stat" id="stat"></span>
+  <div class="card intro">
+    <div>
+      <h1>Berapa yang didapat exchange, negara, dan CFX?</h1>
+      <p>Simulasi acak, bukan data transaksi sebenarnya. Tiap hari ada maksimal 4 trade dengan nilai berbeda-beda, dan tidak semuanya menang. Counterparty (lawan transaksi) adalah pihak independen, hasilnya dicatat terpisah.</p>
     </div>
-    <div class="tline"><div id="tl"></div></div>
+    <details class="how"><summary>Cara membaca dashboard ini (30 detik)</summary>
+      <ol>
+        <li>Buka <b>Menu</b> (kiri atas) untuk memilih pola, modal, target, dan lama simulasi. Simulasi langsung berjalan.</li>
+        <li>Kartu <b>"Trade saat ini"</b>: tiap trade = MM5 beli koin lalu jual ke counterparty. Hijau = menang, merah = kalah.</li>
+        <li>Angka, grafik, dan tabel bertambah seiring trade berjalan. Atur dengan tombol Jeda dan Kecepatan.</li>
+        <li>Yang dihitung: <b>laba bersih MM5</b>, <b>income exchange</b> (fee GK), <b>pajak</b> (titipan negara), dan <b>fee CFX</b>.</li>
+        <li><b>Monte Carlo</b> mengulang simulasi 500 kali untuk melihat peluang, bukan sekadar satu contoh.</li>
+        <li>Ingin dashboard lebih lebar? Sembunyikan Menu atau pakai <b>Layar penuh</b>.</li>
+      </ol></details>
   </div>
 
-  <div class="card tkbox" id="tkbox" style="margin-top:14px"><h2>Trade saat ini</h2><div class="tk" id="tk"></div></div>
+  <div class="duo">
+    <div class="card tkbox" id="tkbox"><h2>Trade saat ini</h2><div class="tk" id="tk"></div></div>
+    <div class="card"><h2>Progres menuju target</h2><div id="progressText"></div><div class="bar"><div id="progressBar" style="width:0"></div></div></div>
+  </div>
 
   <div class="kpis" id="kpis"></div>
-
-  <div class="card" style="margin-bottom:14px">
-    <h2>Progres menuju target</h2>
-    <div id="progressText"></div>
-    <div class="bar"><div id="progressBar" style="width:0"></div></div>
-  </div>
 
   <div class="grid2">
     <div class="card"><h2>Laba bersih MM5 dari waktu ke waktu</h2><div id="chartCum"></div>
@@ -197,9 +251,9 @@ tr.new td{animation:rowin .8s ease-out}
     <div class="card"><h2>Siapa dapat apa (dicatat terpisah)</h2><div id="ledger"></div></div>
   </div>
 
-  <div class="card" style="margin-bottom:14px">
+  <div class="card">
     <h2>Rincian setiap trade</h2>
-    <div class="tbl" id="tblw"><table id="tbl"></table></div>
+    <div class="tbl" id="tblw"><table class="data" id="tbl"></table></div>
     <p class="note" id="tblNote"></p>
   </div>
 
@@ -377,7 +431,7 @@ function prepare() {
 
   const flows = [[200e6,285000],[250e6,285000],[325e6,285000],[1e6,195000]];
   const rate = { gk: p.gk, pph: p.pph, cfx: p.cfx };
-  $('xl').innerHTML = `<div class="tbl"><table><thead><tr><th>Flow</th><th>Beli</th><th>Jual</th><th>Gain cara Excel</th><th>Laba bersih (pajak dikurangkan)</th><th>Selisih</th></tr></thead><tbody>` +
+  $('xl').innerHTML = `<div class="tbl"><table class="data solo"><thead><tr class="cols"><th>Flow</th><th>Beli</th><th>Jual</th><th>Gain cara Excel</th><th>Laba bersih (pajak dikurangkan)</th><th>Selisih</th></tr></thead><tbody>` +
     flows.map(([v,sl],i) => { const f = Sim.flow(v, 205000, sl, rate); return `<tr><td>${i+1}</td><td>${rp(v)} @205.000</td><td>@${sl.toLocaleString('id-ID')}</td><td>${rp(f.mm.excelGain)}</td><td class="${cls(f.mm.pnl)}">${rp(f.mm.pnl)}</td><td>${rp(f.mm.pnl - f.mm.excelGain)}</td></tr>`; }).join('') + `</tbody></table></div>
     <p class="note">Memakai tarif di panel kiri. Dengan tarif asli draft, gain Excel flow 1 = Rp77.388.998,75 dan laba bersih = Rp76.435.079,74. Selisihnya terutama pajak jual yang tidak dikurangkan di kolom net Excel.</p>`;
 }
@@ -412,12 +466,14 @@ function draw(k) {
     ['', 'Penurunan terdalam MM5', rp(-st.dd), 'jarak terbesar dari laba tertinggi', 'Penurunan terbesar laba MM5 dari titik tertingginya. Makin kecil makin aman: menunjukkan seberapa dalam MM5 pernah "turun" sebelum naik lagi.'],
     ['', 'Kas MM5 sekarang', rp(st.cash), 'modal + laba bersih sejauh ini', 'Uang tunai MM5 saat ini: modal awal ditambah laba bersih sejauh ini. Trade berikutnya tidak bisa melebihi angka ini.'],
   ];
-  const kp = $('kpis');
-  if (kp.children.length !== KP.length) {
-    kp.innerHTML = KP.map(([c,l,,,tip]) => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v"></div><div class="s"></div></div>`).join('');
-    KP.forEach(([,,,,tip], i) => addQ(kp.children[i].querySelector('.l'), tip));
+  const kp = $('kpis'), ORDER = [0, 1, 7, 6, 3, 4, 5, 2];
+  if (kp.querySelectorAll('.kpi').length !== KP.length) {
+    const card = i => `<div class="kpi ${KP[i][0]}"><div class="l">${KP[i][1]}</div><div class="v"></div><div class="s"></div></div>`;
+    kp.innerHTML = '<div class="kgroup">Hasil MM5</div>' + ORDER.slice(0, 4).map(card).join('') +
+      '<div class="kgroup">Pendapatan &amp; biaya dari trade (kedua pihak)</div>' + ORDER.slice(4).map(card).join('');
+    kp.querySelectorAll('.kpi').forEach((el, j) => addQ(el.querySelector('.l'), KP[ORDER[j]][4]));
   }
-  KP.forEach(([,,v,sub], i) => { const c = kp.children[i]; c.querySelector('.v').innerHTML = v; c.querySelector('.s').textContent = sub; });
+  kp.querySelectorAll('.kpi').forEach((el, j) => { const k2 = KP[ORDER[j]]; el.querySelector('.v').innerHTML = k2[2]; el.querySelector('.s').textContent = k2[3]; });
 
   // progres
   const ratio = p.target > 0 ? Math.max(0, Math.min(1, st.cum / p.target)) : 0;
@@ -435,7 +491,7 @@ function draw(k) {
   stackChart($('chartInc'), dAgg, MAXINC);
 
   // pembukuan
-  $('ledger').innerHTML = `<table style="width:100%"><tbody>
+  $('ledger').innerHTML = `<table class="plain"><tbody>
     <tr><td>MM5 – laba bersih</td><td class="${cls(st.cum)}">${rp(st.cum)}</td></tr>
     <tr><td>Counterparty – hasil perdagangan (terpisah)</td><td class="${cls(st.cp)}">${rp(st.cp)}</td></tr>
     <tr><td>Exchange (GK) – fee</td><td>${rp(st.gk)}</td></tr>
@@ -445,10 +501,14 @@ function draw(k) {
     <p class="note">Uang hanya berpindah antar pihak, jadi jumlah semua pihak mendekati nol. Selisih kecil muncul karena fee beli dipotong dalam koin dan dinilai di harga beli (cara Excel), sedangkan laba MM5 dan counterparty memakai harga jual. Hasil counterparty tidak digabung ke modal MM5.</p>`;
 
   // tabel
-  const rowHtml = (x, isNew) => `<tr class="${x.win?'w':'l'}${isNew ? ' new' : ''}"><td>${x.day}</td><td>${x.no}</td><td>${rp(x.vol)}</td><td>${Math.round(x.buy).toLocaleString('id-ID')} → ${Math.round(x.sell).toLocaleString('id-ID')} (${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%)</td><td><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td>${rp(x.ex.gk)}</td><td>${rp(x.ex.tax)}</td><td>${rp(x.ex.cfx)}</td><td class="${cls(x.mm.pnl)}">${rp(x.mm.pnl)}</td><td class="${cls(x.cum)}">${rp(x.cum)}</td><td class="${cls(x.cp.pnl)}">${rp(x.cp.pnl)}</td></tr>`;
+  const f0 = v => Math.round(v).toLocaleString('id-ID');
+  const nr = v => (v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('id-ID');
+  const rowHtml = (x, isNew) => `<tr class="${isNew ? 'new' : ''}"><td>${x.day}</td><td>${x.no}</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${f0(x.sell)}</td><td class="${x.move>=0?'pos':'neg'}">${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%</td><td class="ctr"><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td class="gs c-gk">${nr(x.ex.gk)}</td><td class="c-tax">${nr(x.ex.tax)}</td><td class="c-cfx">${nr(x.ex.cfx)}</td><td class="gs ${x.mm.pnl>=0?'pos':'neg'}">${nr(x.mm.pnl)}</td><td class="${x.cum>=0?'pos':'neg'}">${nr(x.cum)}</td><td class="gs ${x.cp.pnl>=0?'pos':'neg'}">${nr(x.cp.pnl)}</td></tr>`;
   const shown = Math.min(k, 600);
   if (ROWS > shown || !$('tbl').tBodies[0]) {
-    $('tbl').innerHTML = `<thead><tr><th>Hari</th><th>#</th><th>Nilai beli</th><th>Harga beli → jual</th><th>Hasil</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Laba MM5</th><th>Laba kumulatif</th><th>Hasil counterparty</th></tr></thead><tbody></tbody>`;
+    $('tbl').innerHTML = `<thead>
+      <tr class="grp"><th colspan="7" class="g-trade">Trade</th><th colspan="3" class="g-fee gs">Fee &amp; pajak (kedua pihak)</th><th colspan="2" class="g-mm gs">MM5</th><th class="g-cp gs">Counterparty</th></tr>
+      <tr class="cols"><th>Hari</th><th>#</th><th>Nilai beli (Rp)</th><th>Harga beli</th><th>Harga jual</th><th>Perubahan</th><th class="ctr">Hasil</th><th class="gs c-gk">Fee GK</th><th class="c-tax">Pajak</th><th class="c-cfx">Fee CFX</th><th class="gs">Laba trade (Rp)</th><th>Laba kumulatif (Rp)</th><th class="gs">Untung/rugi (Rp)</th></tr></thead><tbody></tbody>`;
     ROWS = 0;
   }
   const tb = $('tbl').tBodies[0];
@@ -456,7 +516,7 @@ function draw(k) {
     tb.insertAdjacentHTML('beforeend', s.trades.slice(ROWS, shown).map((x, i, a) => rowHtml(x, i === a.length - 1 && !done)).join(''));
     ROWS = shown; $('tblw').scrollTop = $('tblw').scrollHeight;
   }
-  $('tblNote').textContent = `Fee GK, pajak, dan fee CFX di tabel adalah total dua sisi (MM5 + counterparty) untuk trade itu.${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
+  $('tblNote').textContent = `Kolom Fee GK, Pajak, dan Fee CFX (Rp) adalah total dua sisi (MM5 + counterparty) untuk trade itu. Semua angka dalam Rupiah; harga adalah Rupiah per koin.${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
 }
 
 /* ---------- animasi ---------- */
@@ -498,6 +558,32 @@ $('csv').onclick = csv;
 function setP(o) { Object.keys(o).forEach(k => $(k).value = o[k]); rerun(); }
 $('pVino').onclick = () => setP({ winRate: 40, winMin: 9.3, winMax: 38.7, loseMin: 3, loseMax: 5, winVolMin: 200000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 10000000, buyPrice: 205000, jitter: 0, maxWinStreak: 3, stopAtTarget: '1', ensure: 'none', minTrades: 1, maxTrades: 4 });
 $('pUmum').onclick = () => setP({ winRate: 55, winMin: 5, winMax: 25, loseMin: 3, loseMax: 12, winVolMin: 10000000, winVolMax: 150000000, loseVolMin: 10000000, loseVolMax: 150000000, buyPrice: 205000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', ensure: 'none', minTrades: 1, maxTrades: 4 });
+/* ---------- menu geser & layar penuh ---------- */
+(function () {
+  const body = document.body, mobile = () => matchMedia('(max-width:980px)').matches;
+  const isOpen = () => mobile() ? body.classList.contains('menu-open') : !body.classList.contains('menu-closed');
+  const sync = () => { $('menuBtn').setAttribute('aria-expanded', isOpen()); $('menuBtn').textContent = isOpen() ? '✕ Tutup menu' : '☰ Menu'; };
+  function setMenu(open) {
+    if (mobile()) body.classList.toggle('menu-open', open); else { body.classList.toggle('menu-closed', !open); try { localStorage.setItem('mm5menu', open ? '1' : '0'); } catch (e) {} }
+    sync();
+  }
+  try { if (!mobile() && localStorage.getItem('mm5menu') === '0') body.classList.add('menu-closed'); } catch (e) {}
+  sync();
+  $('menuBtn').onclick = () => setMenu(!isOpen());
+  $('backdrop').onclick = () => setMenu(false);
+  matchMedia('(max-width:980px)').addEventListener('change', () => { body.classList.remove('menu-open'); sync(); });
+  const fs = $('fs');
+  if (!document.documentElement.requestFullscreen) fs.style.display = 'none';
+  const toggleFs = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  fs.onclick = toggleFs;
+  document.addEventListener('fullscreenchange', () => { fs.textContent = document.fullscreenElement ? '⛶ Keluar layar penuh' : '⛶ Layar penuh'; });
+  document.addEventListener('keydown', e => {
+    if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'm' || e.key === 'M') setMenu(!isOpen());
+    if ((e.key === 'f' || e.key === 'F') && document.documentElement.requestFullscreen) toggleFs();
+  });
+})();
+
 rerun();
 </script>
 </body>
