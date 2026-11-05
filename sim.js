@@ -47,6 +47,11 @@
       tax: mm.sellTax + cp.sellTax,
       cfx: mm.buyCFX + mm.sellCFX + cp.sellCFX + cp.buyCFX,
     };
+    // Fee pembeli dipotong dalam KOIN (MM5 di leg beli, counterparty di leg jual);
+    // fee penjual dan pajak dibayar dalam RUPIAH.
+    ex.gkCoin = E * gk + Enet * gk;            ex.gkRp = mm.sellGK + cp.sellGK;
+    ex.cfxCoin = E * cfx + Enet * cfx;         ex.cfxRp = mm.sellCFX + cp.sellCFX;
+    ex.gkCoinRp = mm.buyGK + cp.buyGK;         ex.cfxCoinRp = mm.buyCFX + cp.buyCFX;   // nilai setara Rp
     return { E, Enet, gross, mm, cp, ex, turnover: vol + gross };
   }
 

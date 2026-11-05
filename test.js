@@ -36,4 +36,9 @@ const mc = monteCarlo(p, 1, 300); console.log('MC hit', mc.hit, 'loss', mc.loss,
 // kas tidak boleh negatif walau kalah
 const q = simulate({...p, winRate:0, loseMin:.3, loseMax:.5, days:60}, 9);
 console.log('all-lose: cash min', Math.min(...q.trades.map(t=>t.cash)).toFixed(0), 'skipped', q.tot.skipped);
+
+{ const f=flow(100e6,205000,250000,rate); const e=f.ex;
+  chk('GK: Rp + koin setara = total', e.gkRp+e.gkCoinRp, e.gk, 0.001);
+  chk('CFX: Rp + koin setara = total', e.cfxRp+e.cfxCoinRp, e.cfx, 0.001);
+  chk('koin fee GK dinilai harga beli/jual', e.gkCoin>0 ? (f.E*rate.gk*205000 + f.Enet*rate.gk*250000) : 0, e.gkCoinRp, 0.01); }
 process.exit(ok ? 0 : 1);

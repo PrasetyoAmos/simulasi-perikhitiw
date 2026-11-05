@@ -269,8 +269,8 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
   <div class="grid2">
     <div class="card"><h2>Laba bersih MM5 dari waktu ke waktu</h2><div id="chartCum"></div>
       <div class="legend"><span><i style="background:#5b9cf5"></i>Laba kumulatif</span><span><i style="background:#f0b34a"></i>Target (garis putus-putus)</span></div></div>
-    <div class="card"><h2>Pendapatan exchange per hari</h2><div id="chartInc"></div>
-      <div class="legend"><span><i style="background:var(--gk)"></i>Fee GK (pendapatan exchange)</span><span><i style="background:var(--tax)"></i>Pajak (titipan negara)</span><span><i style="background:var(--cfx)"></i>Fee CFX</span></div></div>
+    <div class="card"><h2>Pendapatan exchange per hari (setara Rp)</h2><div id="chartInc"></div>
+      <div class="legend"><span><i style="background:var(--gk)"></i>Fee GK (pendapatan exchange, setara Rp)</span><span><i style="background:var(--tax)"></i>Pajak (titipan negara)</span><span><i style="background:var(--cfx)"></i>Fee CFX</span></div></div>
   </div>
 
   <div class="grid2">
@@ -439,13 +439,13 @@ function prepare() {
   // posisi x tiap trade (hari ke-n, pecahan sesuai urutan dalam hari)
   const perDay = {}; s.trades.forEach(t => perDay[t.day] = (perDay[t.day] || 0) + 1);
   const seen = {}; X = [[0, 0]];
-  let st = { n: 0, wins: 0, losses: 0, gk: 0, tax: 0, cfx: 0, turnover: 0, buy: 0, sell: 0, cp: 0, cum: 0, cash: p.capital, peak: 0, dd: 0 };
+  let st = { n: 0, wins: 0, losses: 0, gk: 0, tax: 0, cfx: 0, turnover: 0, buy: 0, sell: 0, gkC: 0, gkR: 0, cfxC: 0, cfxR: 0, cp: 0, cum: 0, cash: p.capital, peak: 0, dd: 0 };
   PRE = [st];
   s.trades.forEach(t => {
     seen[t.day] = (seen[t.day] || 0) + 1;
     X.push([t.day - 1 + seen[t.day] / perDay[t.day], t.cum]);
     const q = { ...st, n: st.n + 1, wins: st.wins + (t.win ? 1 : 0), losses: st.losses + (t.win ? 0 : 1),
-      gk: st.gk + t.ex.gk, tax: st.tax + t.ex.tax, cfx: st.cfx + t.ex.cfx, turnover: st.turnover + t.turnover, buy: st.buy + t.vol, sell: st.sell + t.gross,
+      gk: st.gk + t.ex.gk, tax: st.tax + t.ex.tax, cfx: st.cfx + t.ex.cfx, turnover: st.turnover + t.turnover, buy: st.buy + t.vol, sell: st.sell + t.gross, gkC: st.gkC + t.ex.gkCoin, gkR: st.gkR + t.ex.gkRp, cfxC: st.cfxC + t.ex.cfxCoin, cfxR: st.cfxR + t.ex.cfxRp,
       cp: st.cp + t.cp.pnl, cum: t.cum, cash: t.cash };
     q.peak = Math.max(st.peak, q.cum); q.dd = Math.max(st.dd, q.peak - q.cum);
     PRE.push(q); st = q;
@@ -486,7 +486,7 @@ function draw(k) {
     `<div class="top">Hari ${tr.day} dari ${p.days} · trade ke-${tr.no} di hari ini${done ? ' · <b>simulasi selesai</b>' : ''}</div>
      <div class="main flash">MM5 <b>beli ${kn(tr.E)} koin</b> senilai <b>${rp(tr.vol)}</b> (harga Rp${Math.round(tr.buy).toLocaleString('id-ID')}/koin), lalu <b>jual ${kn(tr.Enet)} koin</b> senilai <b>${rp(tr.gross)}</b> (harga Rp${Math.round(tr.sell).toLocaleString('id-ID')}/koin, <b>${tr.move >= 0 ? '+' : ''}${(tr.move*100).toFixed(1).replace('.',',')}%</b>).</div>
      <div class="res flash"><small>${tr.win ? 'MENANG' : 'KALAH'}</small>${rp(tr.mm.pnl)}</div>
-     <div class="sub flash">Counterparty: jual ${kn(tr.E)} koin ke MM5, beli kembali ${kn(tr.Enet)} koin, hasil <b class="${tr.cp.pnl>=0?'pos':'neg'}">${rp(tr.cp.pnl)}</b>. Dari trade ini: fee GK ${rp(tr.ex.gk)} · pajak ${rp(tr.ex.tax)} · fee CFX ${rp(tr.ex.cfx)} (total dua sisi)</div>`;
+     <div class="sub flash">Counterparty: jual ${kn(tr.E)} koin ke MM5, beli kembali ${kn(tr.Enet)} koin, hasil <b class="${tr.cp.pnl>=0?'pos':'neg'}">${rp(tr.cp.pnl)}</b>. Dari trade ini: fee GK ${kn(tr.ex.gkCoin)} koin + ${rp(tr.ex.gkRp)} · pajak ${rp(tr.ex.tax)} · fee CFX ${rp(tr.ex.cfx)} (total dua sisi)</div>`;
 
   // kartu ringkasan
   const roi = p.capital ? st.cum / p.capital : 0;
@@ -494,9 +494,9 @@ function draw(k) {
     ['', 'Laba bersih MM5', `<span class="${cls(st.cum)}">${rp(st.cum)}</span>`, `${pct(roi)} dari modal · ekuitas ${rp(p.capital + st.cum)}`, 'Untung atau rugi MM5 setelah dikurangi semua fee dan pajak. Persen di bawahnya (ROI) = laba dibanding modal. Ekuitas = modal + laba.'],
     ['', 'Jumlah trade', `${st.n} <span style="font-size:13px;color:var(--mut)">(<span class="pos">${st.wins} menang</span> / <span class="neg">${st.losses} kalah</span>)</span>`, `menang ${st.n ? Math.round(st.wins/st.n*100) : 0}%${s.tot.skipped && done ? ' · ' + s.tot.skipped + ' dilewati (dana habis)' : ''}`, 'Satu trade = MM5 beli koin lalu jual ke counterparty. Menang/kalah ditentukan dari harga jual naik atau turun dibanding harga beli.'],
     ['', 'Total nilai diperdagangkan', rp(st.turnover), `beli ${rp(st.buy)} + jual ${rp(st.sell)}`, 'Jumlah Rupiah yang berputar: nilai beli ditambah nilai jual dari semua trade. Fee dan pajak dihitung dari angka ini.'],
-    ['gk', 'Income exchange (fee GK)', rp(st.gk), 'fee dari kedua pihak', 'Pendapatan exchange dari fee transaksi. Dikenakan pada pembeli dan penjual, jadi dihitung dari MM5 dan counterparty. Besar tarif ada di pengaturan Tarif.'],
+    ['gk', 'Income exchange (fee GK)', rp(st.gk), `${kn(st.gkC)} koin (fee beli) + ${rp(st.gkR)} (fee jual)`, 'Pendapatan exchange dari fee transaksi, dari MM5 dan counterparty. Fee saat membeli diterima dalam KOIN, fee saat menjual diterima dalam Rupiah. Angka besar di kartu = total nilai setara Rupiah (koin dinilai di harga trade).'],
     ['tax', 'Pajak (PPN/PPh)', rp(st.tax), 'titipan untuk negara, bukan pendapatan', 'Pajak atas penjualan, dibayar penjual dan disetor ke negara. Bukan pendapatan exchange. Di Excel disebut PPH.'],
-    ['cfx', 'Fee CFX', rp(st.cfx), 'dibayar ke CFX, kedua pihak', 'Biaya yang dibayar ke bursa CFX, dari pembeli dan penjual.'],
+    ['cfx', 'Fee CFX', rp(st.cfx), `${kn(st.cfxC)} koin (fee beli) + ${rp(st.cfxR)} (fee jual)`, 'Biaya ke bursa CFX dari pembeli dan penjual. Sisi beli dibayar dalam koin, sisi jual dalam Rupiah. Angka besar = total nilai setara Rupiah.'],
     ['', 'Penurunan terdalam MM5', rp(-st.dd), 'jarak terbesar dari laba tertinggi', 'Penurunan terbesar laba MM5 dari titik tertingginya. Makin kecil makin aman: menunjukkan seberapa dalam MM5 pernah "turun" sebelum naik lagi.'],
     ['', 'Kas MM5 sekarang', rp(st.cash), 'modal + laba bersih sejauh ini', 'Uang tunai MM5 saat ini: modal awal ditambah laba bersih sejauh ini. Trade berikutnya tidak bisa melebihi angka ini.'],
   ];
@@ -528,11 +528,11 @@ function draw(k) {
   $('ledger').innerHTML = `<table class="plain"><tbody>
     <tr><td>MM5 – laba bersih</td><td class="${cls(st.cum)}">${rp(st.cum)}</td></tr>
     <tr><td>Counterparty – hasil perdagangan (terpisah)</td><td class="${cls(st.cp)}">${rp(st.cp)}</td></tr>
-    <tr><td>Exchange (GK) – fee</td><td>${rp(st.gk)}</td></tr>
+    <tr><td>Exchange (GK) – fee<br><small style="color:var(--mut)">${kn(st.gkC)} koin + ${rp(st.gkR)}</small></td><td>${rp(st.gk)}<br><small style="color:var(--mut)">setara Rupiah</small></td></tr>
     <tr><td>Negara – pajak</td><td>${rp(st.tax)}</td></tr>
-    <tr><td>CFX – fee</td><td>${rp(st.cfx)}</td></tr>
+    <tr><td>CFX – fee<br><small style="color:var(--mut)">${kn(st.cfxC)} koin + ${rp(st.cfxR)}</small></td><td>${rp(st.cfx)}<br><small style="color:var(--mut)">setara Rupiah</small></td></tr>
     <tr><td><b>Jumlah semua pihak</b></td><td>${rp(st.cum + st.cp + st.gk + st.tax + st.cfx)}</td></tr></tbody></table>
-    <p class="note">Uang hanya berpindah antar pihak, jadi jumlah semua pihak mendekati nol. Selisih kecil muncul karena fee beli dipotong dalam koin dan dinilai di harga beli (cara Excel), sedangkan laba MM5 dan counterparty memakai harga jual. Hasil counterparty tidak digabung ke modal MM5.</p>`;
+    <p class="note">Fee beli diterima exchange dan CFX dalam koin, fee jual dalam Rupiah; di sini semuanya dinilai setara Rupiah. Uang hanya berpindah antar pihak, jadi jumlah semua pihak mendekati nol. Selisih kecil muncul karena fee beli dipotong dalam koin dan dinilai di harga beli (cara Excel), sedangkan laba MM5 dan counterparty memakai harga jual. Hasil counterparty tidak digabung ke modal MM5.</p>`;
 
   // tabel
   const f0 = v => Math.round(v).toLocaleString('id-ID');
@@ -558,7 +558,7 @@ function draw(k) {
       <tr><td>1</td><td>Counterparty menjual koin ke MM5</td><td>${nr(x.vol)}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(c.sellGK)}</td><td>${nr(c.sellTax)}</td><td>${nr(c.sellCFX)}</td><td>0 (diserahkan)</td><td class="pos">+${nr(cpIn)}</td></tr>
       <tr><td>2</td><td>Counterparty membeli koin dari MM5</td><td>${nr(x.gross)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${fc(c.buyGK, x.sell)}</td><td>0</td><td>${fc(c.buyCFX, x.sell)}</td><td>${kn(cpCoinNet)}</td><td class="neg">−${nr(x.gross)}</td></tr></tbody></table>
       <div class="detsum">Hasil counterparty: <b class="${sg(c.pnl)}">${nr(c.pnl)}</b> = selisih harga <span class="${sg(priceEff)}">${nr(priceEff)}</span> (koin dijual di harga beli, dibeli kembali di harga jual) − fee &amp; pajak ${nr(cpCost)}. Fee saat membeli juga dipotong dari koin, nilainya dihitung di harga jual.</div>
-      <div class="detsum">Pendapatan exchange dari trade ini: fee GK ${nr(x.ex.gk)} · pajak ${nr(x.ex.tax)} · fee CFX ${nr(x.ex.cfx)} (dua sisi). Angka Rp untuk fee beli adalah nilai setara dari fee dalam koin.</div>
+      <div class="detsum">Pendapatan exchange dari trade ini (dua sisi): fee GK <b>${kn(x.ex.gkCoin)} koin + Rp${nr(x.ex.gkRp)}</b> (total setara Rp${nr(x.ex.gk)}) · fee CFX ${kn(x.ex.cfxCoin)} koin + Rp${nr(x.ex.cfxRp)} · pajak Rp${nr(x.ex.tax)} (ke negara, Rupiah).</div>
     </div></td></tr>`;
   };
   const rowHtml = (x, isNew, i) => `<tr class="tr ${isNew ? 'new' : ''} ${i % 2 ? 'alt' : ''}" title="Klik untuk melihat langkah beli dan jual"><td>${x.day}</td><td>${x.no}</td><td>${f0(x.buy)}</td><td>${kn(x.E)}</td><td>${nr(x.vol)}</td><td>${f0(x.sell)}</td><td>${kn(x.Enet)}</td><td>${nr(x.gross)}</td><td class="${x.move>=0?'pos':'neg'}">${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%</td><td class="ctr"><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td class="gs c-gk">${nr(x.ex.gk)}</td><td class="c-tax">${nr(x.ex.tax)}</td><td class="c-cfx">${nr(x.ex.cfx)}</td><td class="gs ${sg(x.mm.pnl)}">${nr(x.mm.pnl)}</td><td class="${sg(x.cum)}">${nr(x.cum)}</td><td class="gs ${sg(x.cp.pnl)}">${nr(x.cp.pnl)}</td></tr>` + detail(x);
@@ -597,8 +597,8 @@ function rerun() { prepare(); play(true); }
 
 function csv() {
   if (!last) return;
-  const h = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total','pajak_total','fee_cfx_total','laba_mm5','kumulatif_mm5','hasil_counterparty','cp_fee_gk','cp_pajak','cp_fee_cfx','kas_mm5'];
-  const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.E.toFixed(6),x.buy.toFixed(2),x.Enet.toFixed(6),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),(x.cp.sellGK+x.cp.buyGK).toFixed(2),x.cp.sellTax.toFixed(2),(x.cp.sellCFX+x.cp.buyCFX).toFixed(2),x.cash.toFixed(2)].join(',')));
+  const h = ['hari','no','notional_beli','koin_dibeli','harga_beli','koin_dijual','harga_jual','hasil','notional_jual','fee_gk_total_setara_rp','fee_gk_koin','fee_gk_rp','pajak_total','fee_cfx_total_setara_rp','fee_cfx_koin','fee_cfx_rp','laba_mm5','kumulatif_mm5','hasil_counterparty','cp_fee_gk','cp_pajak','cp_fee_cfx','kas_mm5'];
+  const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.E.toFixed(6),x.buy.toFixed(2),x.Enet.toFixed(6),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.gkCoin.toFixed(6),x.ex.gkRp.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.ex.cfxCoin.toFixed(6),x.ex.cfxRp.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),(x.cp.sellGK+x.cp.buyGK).toFixed(2),x.cp.sellTax.toFixed(2),(x.cp.sellCFX+x.cp.buyCFX).toFixed(2),x.cash.toFixed(2)].join(',')));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
   a.download = 'simulasi-mm5.csv'; a.click(); URL.revokeObjectURL(a.href);
