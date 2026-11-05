@@ -3,34 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simulasi MM5 – Dashboard Income Exchange</title>
+<title>Simulasi MM5 – income exchange, pajak, dan fee CFX</title>
 <style>
 :root{
-  --bg:#0f1420;--panel:#171e2e;--panel2:#1d263a;--line:#2a3550;--txt:#e6ebf5;--mut:#8f9bb5;
+  --bg:#0f1420;--panel:#171e2e;--panel2:#1d263a;--line:#2a3550;--txt:#e6ebf5;--mut:#9aa6bf;
   --win:#34c78a;--lose:#ef6a6a;--gk:#5b9cf5;--tax:#f0b34a;--cfx:#b48cf2;--accent:#5b9cf5;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{padding:18px 24px 6px}
-h1{margin:0;font-size:20px}
-header p{margin:4px 0 0;color:var(--mut);max-width:980px}
-.wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:14px 24px 40px;align-items:start}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:18px 24px 4px}
+h1{margin:0;font-size:21px}
+header p{margin:4px 0 8px;color:var(--mut);max-width:980px}
+.how{max-width:980px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin-bottom:6px}
+.how summary{cursor:pointer;font-weight:600}
+.how ol{margin:8px 0 4px;padding-left:20px;color:var(--mut)}.how li{margin:3px 0}
+.wrap{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:12px 24px 40px;align-items:start}
 @media(max-width:980px){.wrap{grid-template-columns:1fr}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .card h2{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);font-weight:600}
 aside .card{margin-bottom:12px}
-label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
-input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:6px 8px;font:inherit}
+label{display:block;font-size:12.5px;color:var(--mut);margin:9px 0 3px}
+.q{display:inline-block;position:relative;width:16px;height:16px;line-height:15px;text-align:center;border-radius:50%;background:var(--panel2);border:1px solid #3a4a70;font-size:10px;font-weight:700;margin-left:6px;cursor:help;color:var(--accent);text-transform:none;letter-spacing:0;vertical-align:1px}
+.q:hover,.q:focus,.q.open{background:var(--accent);color:#08101f;outline:none}
+.q:hover::after,.q:focus::after,.q.open::after{content:attr(data-tip);position:absolute;z-index:50;top:22px;left:-12px;width:250px;padding:9px 11px;background:#0a0f1a;color:var(--txt);border:1px solid var(--accent);border-radius:8px;font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;box-shadow:0 8px 24px #000a}
+.q.flip:hover::after,.q.flip:focus::after,.q.flip.open::after{left:auto;right:-12px}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 8px;font:inherit}
 input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 button{background:var(--accent);color:#08101f;border:0;border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;cursor:pointer}
 button.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
-button:hover{filter:brightness(1.1)}
+button:hover{filter:brightness(1.12)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:14px}
+aside details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:12px}
+aside details summary{cursor:pointer;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.note{font-size:12px;color:var(--mut);margin:8px 0 0}
+/* kontrol animasi */
+.ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctrl select{width:auto}
+.ctrl .stat{margin-left:auto;color:var(--mut);font-size:13px}
+.tline{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:10px}
+.tline>div{height:100%;background:var(--accent);width:0;transition:width .15s}
+/* ticker */
+.tk{min-height:112px;display:grid;grid-template-columns:1fr auto;gap:6px 18px;align-items:center}
+.tk .top{grid-column:1/-1;color:var(--mut);font-size:13px}
+.tk .main{font-size:16px}
+.tk .res{font-size:26px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.tk .res small{display:block;font-size:12px;font-weight:700;letter-spacing:.06em}
+.tk .sub{grid-column:1/-1;color:var(--mut);font-size:12.5px}
+.tk.w .res{color:var(--win)}.tk.l .res{color:var(--lose)}
+.tk .flash{animation:flash .6s ease-out}
+@keyframes flash{from{opacity:.2;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tkbox.w{box-shadow:0 0 0 1px #34c78a55 inset}.tkbox.l{box-shadow:0 0 0 1px #ef6a6a55 inset}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.kpi .l{font-size:12px;color:var(--mut)}
-.kpi .v{font-size:19px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12.5px;color:var(--mut)}
+.kpi .v{font-size:20px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
 .kpi .s{font-size:12px;color:var(--mut);margin-top:2px}
 .kpi.gk{border-top:3px solid var(--gk)}.kpi.tax{border-top:3px solid var(--tax)}.kpi.cfx{border-top:3px solid var(--cfx)}
 .pos{color:var(--win)}.neg{color:var(--lose)}
@@ -38,6 +65,8 @@ button:hover{filter:brightness(1.1)}
 @media(max-width:1250px){.grid2{grid-template-columns:1fr}}
 svg{width:100%;height:auto;display:block}
 svg text{fill:var(--mut);font-size:11px}
+.pulse{animation:pulse 1s ease-out infinite}
+@keyframes pulse{from{r:4;opacity:1}to{r:11;opacity:0}}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:6px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .tbl{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:8px}
@@ -45,89 +74,109 @@ table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;whit
 th,td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--line)}
 th{position:sticky;top:0;background:var(--panel2);color:var(--mut);font-weight:600;font-size:12px}
 th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
-tr.w td:nth-child(5){color:var(--win)}tr.l td:nth-child(5){color:var(--lose)}
-.note{font-size:12px;color:var(--mut);margin:8px 0 0}
+tr.new td{animation:rowin .8s ease-out}
+@keyframes rowin{from{background:#5b9cf544}to{background:transparent}}
 .tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;font-weight:700}
 .tag.w{background:#34c78a26;color:var(--win)}.tag.l{background:#ef6a6a26;color:var(--lose)}
 .bar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:8px}
-.bar>div{height:100%;background:var(--win)}
-details summary{cursor:pointer;color:var(--mut)}
+.bar>div{height:100%;transition:width .25s}
+.big2{font-size:18px;font-weight:700}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <header>
-  <h1>Simulasi MM5 – income exchange, pajak, dan fee CFX</h1>
-  <p>Simulasi acak: maksimal 4 trade per hari, volume tidak seragam, dan hasil tidak selalu menang. Satu trade = satu flow di Excel (MM5 beli koin, lalu jual ke counterparty). Counterparty independen, hasilnya dicatat terpisah dan tidak masuk modal MM5. Ini simulasi, bukan data transaksi riil.</p>
+  <h1>Simulasi MM5: berapa yang didapat exchange, negara, dan CFX?</h1>
+  <p>Simulasi acak, bukan data transaksi sebenarnya. Setiap hari ada maksimal 4 trade, nilainya berbeda-beda, dan tidak semuanya menang. Counterparty (lawan transaksi) adalah pihak independen, hasilnya dicatat terpisah.</p>
+  <details class="how"><summary>Cara membaca dashboard ini (30 detik)</summary>
+    <ol>
+      <li>Pilih <b>Pola simulasi</b> di kiri, lalu atur modal, target, dan jumlah hari. Simulasi langsung berjalan.</li>
+      <li>Lihat kartu <b>"Trade saat ini"</b>: tiap trade = MM5 membeli koin lalu menjualnya ke counterparty. Hijau = menang, merah = kalah.</li>
+      <li>Angka di kartu, grafik, dan tabel bertambah seiring trade berjalan. Gunakan tombol Jeda, kecepatan, atau "Langsung selesai".</li>
+      <li>Yang dihitung: <b>laba bersih MM5</b>, <b>income exchange</b> (fee GK), <b>pajak</b> (titipan negara), dan <b>fee CFX</b>.</li>
+      <li>Panel <b>Monte Carlo</b> mengulang simulasi 500 kali untuk melihat peluang capai target, bukan sekadar satu contoh.</li>
+    </ol></details>
 </header>
 
 <div class="wrap">
 <aside>
   <div class="card">
-    <h2>Pola simulasi</h2>
+    <h2>1. Pilih pola</h2>
     <div class="btns" style="margin-top:0">
       <button class="sec" id="pVino">Seperti Excel Mas Vino</button>
       <button class="sec" id="pUmum">Umum (acak)</button>
     </div>
-    <p class="note">Mas Vino: flow menang besar (Rp200–325 jt) di harga jauh di atas rata-rata, flow kalah kecil. MM5 sering kalah, tapi saldo akhir untung.</p>
+    <p class="note"><b>Mas Vino:</b> trade menang besar (Rp200–325 jt) di harga jauh di atas rata-rata, trade kalah kecil. MM5 sering kalah, tapi saldo akhir untung.<br><b>Umum:</b> menang/kalah acak dengan nilai sedang.</p>
   </div>
   <div class="card">
-    <h2>Modal &amp; target</h2>
-    <label>Dana MM5 (Rp)</label><input id="capital" type="number" value="450000000">
-    <label>Target laba bersih MM5 (Rp)</label><input id="target" type="number" value="373500000">
+    <h2>2. Modal &amp; target</h2>
+    <label>Dana MM5 (Rp)<span class="q" title="Modal awal yang dipakai MM5 untuk membeli koin">?</span></label><input id="capital" type="number" value="450000000">
+    <label>Target laba bersih MM5 (Rp)<span class="q" title="Laba yang ingin dicapai, di luar modal. Default dari sel F4 Excel.">?</span></label><input id="target" type="number" value="373500000">
     <div class="row2">
-      <div><label>Jumlah hari</label><input id="days" type="number" min="1" max="365" value="30"></div>
-      <div><label>Seed acak</label><input id="seed" type="number" value="12345"></div>
+      <div><label>Lama simulasi (hari)</label><input id="days" type="number" min="1" max="365" value="30"></div>
+      <div><label>Kode acak<span class="q" title="Angka yang mengunci hasil acak. Kode sama = hasil sama persis. Tombol 'Acak ulang' menggantinya.">?</span></label><input id="seed" type="number" value="12345"></div>
     </div>
+    <div class="btns"><button id="reroll">Acak ulang</button><button class="sec" id="reset">Reset</button></div>
   </div>
-  <div class="card">
-    <h2>Trade per hari &amp; volume</h2>
+  <details>
+    <summary>3. Pengaturan trade (lanjutan)</summary>
     <div class="row2">
-      <div><label>Min trade/hari</label><input id="minTrades" type="number" min="0" max="4" value="1"></div>
-      <div><label>Maks trade/hari</label><input id="maxTrades" type="number" min="0" max="4" value="4"></div>
+      <div><label>Min trade / hari</label><input id="minTrades" type="number" min="0" max="4" value="1"></div>
+      <div><label>Maks trade / hari</label><input id="maxTrades" type="number" min="0" max="4" value="4"></div>
     </div>
     <div class="row2">
-      <div><label>Volume saat menang, min (Rp)</label><input id="winVolMin" type="number" value="10000000"></div>
-      <div><label>Volume saat menang, maks (Rp)</label><input id="winVolMax" type="number" value="150000000"></div>
-      <div><label>Volume saat kalah, min (Rp)</label><input id="loseVolMin" type="number" value="10000000"></div>
-      <div><label>Volume saat kalah, maks (Rp)</label><input id="loseVolMax" type="number" value="150000000"></div>
+      <div><label>Nilai trade menang, min</label><input id="winVolMin" type="number" value="10000000"></div>
+      <div><label>Nilai trade menang, maks</label><input id="winVolMax" type="number" value="150000000"></div>
+      <div><label>Nilai trade kalah, min</label><input id="loseVolMin" type="number" value="10000000"></div>
+      <div><label>Nilai trade kalah, maks</label><input id="loseVolMax" type="number" value="150000000"></div>
     </div>
-    <label>Maks menang beruntun (0 = bebas)</label><input id="maxWinStreak" type="number" min="0" value="0">
+    <label>Maks menang beruntun<span class="q" title="Setelah menang sebanyak ini berturut-turut, trade berikutnya dipaksa kalah. 0 = tanpa batas.">?</span></label><input id="maxWinStreak" type="number" min="0" value="0">
     <label>Setelah target tercapai</label>
     <select id="stopAtTarget"><option value="0">Terus trade sampai hari terakhir</option><option value="1">Berhenti trade</option></select>
-    <label>Contoh simulasi yang ditampilkan</label>
-    <select id="ensure"><option value="none">Acak apa adanya</option><option value="profit">Pilih contoh yang berakhir untung</option><option value="target">Pilih contoh yang mencapai target</option></select>
-    <p class="note">Volume tiap trade diacak (skala log, jadi nominal kecil lebih sering) dan dibatasi saldo kas MM5. "Pilih contoh" hanya memilih satu jalur dari banyak simulasi; peluang sebenarnya lihat panel Monte Carlo.</p>
-  </div>
-  <div class="card">
-    <h2>Peluang menang &amp; selisih harga</h2>
-    <label>Peluang menang (%)</label><input id="winRate" type="number" min="0" max="100" value="55">
+    <label>Contoh yang ditampilkan<span class="q" title="'Pilih contoh' mencari satu jalur dari banyak simulasi acak. Ini hanya contoh tampilan, bukan perkiraan hasil. Peluang sebenarnya ada di panel Monte Carlo.">?</span></label>
+    <select id="ensure"><option value="none">Acak apa adanya</option><option value="profit">Pilih contoh yang berakhir untung</option><option value="target">Pilih contoh yang capai target</option></select>
+    <p class="note">Nilai tiap trade diacak di rentang itu dan tidak pernah melebihi kas MM5.</p>
+  </details>
+  <details>
+    <summary>4. Peluang menang &amp; harga (lanjutan)</summary>
+    <label>Peluang menang (%)<span class="q" title="Kemungkinan tiap trade berakhir menang">?</span></label><input id="winRate" type="number" min="0" max="100" value="55">
     <div class="row2">
-      <div><label>Naik saat menang, min (%)</label><input id="winMin" type="number" step="0.1" value="5"></div>
-      <div><label>Naik saat menang, maks (%)</label><input id="winMax" type="number" step="0.1" value="25"></div>
-      <div><label>Turun saat kalah, min (%)</label><input id="loseMin" type="number" step="0.1" value="3"></div>
-      <div><label>Turun saat kalah, maks (%)</label><input id="loseMax" type="number" step="0.1" value="12"></div>
+      <div><label>Harga naik saat menang, min (%)</label><input id="winMin" type="number" step="0.1" value="5"></div>
+      <div><label>Harga naik saat menang, maks (%)</label><input id="winMax" type="number" step="0.1" value="25"></div>
+      <div><label>Harga turun saat kalah, min (%)</label><input id="loseMin" type="number" step="0.1" value="3"></div>
+      <div><label>Harga turun saat kalah, maks (%)</label><input id="loseMax" type="number" step="0.1" value="12"></div>
     </div>
     <div class="row2">
-      <div><label>Harga beli dasar (Rp/koin)</label><input id="buyPrice" type="number" value="205000"></div>
+      <div><label>Harga beli (Rp/koin)</label><input id="buyPrice" type="number" value="205000"></div>
       <div><label>Variasi harga beli (±%)</label><input id="jitter" type="number" step="0.1" value="2"></div>
     </div>
     <p class="note">Contoh Excel: beli 205.000, jual 285.000 (+39%) atau 195.000 (−4,9%).</p>
-  </div>
-  <div class="card">
-    <h2>Tarif (salinan draft Excel)</h2>
-    <label>Fee GK per sisi (%)</label><input id="gk" type="number" step="0.001" value="0.18">
-    <label>Pajak jual (%) – di Excel disebut PPH</label><input id="pph" type="number" step="0.001" value="0.21">
-    <label>Fee CFX per sisi (%)</label><input id="cfx" type="number" step="0.00001" value="0.00555">
-    <p class="note">Tarif belum diverifikasi sebagai tarif berlaku. Pajak hanya dikenakan pada penjual; fee GK dan CFX dikenakan pada pembeli dan penjual.</p>
-    <div class="btns">
-      <button id="reroll">Acak ulang</button>
-      <button class="sec" id="csv">Ekspor CSV</button>
-      <button class="sec" id="reset">Reset</button>
-    </div>
-  </div>
+  </details>
+  <details>
+    <summary>5. Tarif fee &amp; pajak (lanjutan)</summary>
+    <label>Fee GK per sisi (%)<span class="q" title="Pendapatan exchange. Dikenakan pada pembeli dan penjual.">?</span></label><input id="gk" type="number" step="0.001" value="0.18">
+    <label>Pajak jual (%)<span class="q" title="Di Excel disebut PPH. Hanya dikenakan pada penjual dan disetor ke negara.">?</span></label><input id="pph" type="number" step="0.001" value="0.21">
+    <label>Fee CFX per sisi (%)<span class="q" title="Dibayar ke CFX, pembeli dan penjual.">?</span></label><input id="cfx" type="number" step="0.00001" value="0.00555">
+    <p class="note">Tarif disalin dari draft Excel dan belum diverifikasi sebagai tarif berlaku.</p>
+  </details>
+  <div class="card"><button class="sec" id="csv" style="width:100%">Unduh rincian trade (CSV)</button></div>
 </aside>
 
 <main>
+  <div class="card">
+    <div class="ctrl">
+      <button id="play">▶ Putar ulang</button>
+      <button class="sec" id="pause">⏸ Jeda</button>
+      <button class="sec" id="skip">⏭ Langsung selesai</button>
+      <label style="margin:0">Kecepatan</label>
+      <select id="speed"><option value="1">Pelan</option><option value="3" selected>Sedang</option><option value="8">Cepat</option><option value="20">Sangat cepat</option></select>
+      <span class="stat" id="stat"></span>
+    </div>
+    <div class="tline"><div id="tl"></div></div>
+  </div>
+
+  <div class="card tkbox" id="tkbox" style="margin-top:14px"><h2>Trade saat ini</h2><div class="tk" id="tk"></div></div>
+
   <div class="kpis" id="kpis"></div>
 
   <div class="card" style="margin-bottom:14px">
@@ -137,19 +186,20 @@ details summary{cursor:pointer;color:var(--mut)}
   </div>
 
   <div class="grid2">
-    <div class="card"><h2>Laba bersih kumulatif MM5 vs target</h2><div id="chartCum"></div></div>
+    <div class="card"><h2>Laba bersih MM5 dari waktu ke waktu</h2><div id="chartCum"></div>
+      <div class="legend"><span><i style="background:#5b9cf5"></i>Laba kumulatif</span><span><i style="background:#f0b34a"></i>Target (garis putus-putus)</span></div></div>
     <div class="card"><h2>Pendapatan exchange per hari</h2><div id="chartInc"></div>
-      <div class="legend"><span><i style="background:var(--gk)"></i>Fee GK</span><span><i style="background:var(--tax)"></i>Pajak (PPN/PPh)</span><span><i style="background:var(--cfx)"></i>Fee CFX</span></div></div>
+      <div class="legend"><span><i style="background:var(--gk)"></i>Fee GK (pendapatan exchange)</span><span><i style="background:var(--tax)"></i>Pajak (titipan negara)</span><span><i style="background:var(--cfx)"></i>Fee CFX</span></div></div>
   </div>
 
   <div class="grid2">
-    <div class="card"><h2>Monte Carlo (500 simulasi, seed berbeda-beda)</h2><div id="mc"></div></div>
-    <div class="card"><h2>Pembukuan terpisah</h2><div id="ledger"></div></div>
+    <div class="card"><h2>Peluang sebenarnya (Monte Carlo, 500 simulasi)</h2><div id="mc"></div></div>
+    <div class="card"><h2>Siapa dapat apa (dicatat terpisah)</h2><div id="ledger"></div></div>
   </div>
 
   <div class="card" style="margin-bottom:14px">
-    <h2>Rincian trade</h2>
-    <div class="tbl"><table id="tbl"></table></div>
+    <h2>Rincian setiap trade</h2>
+    <div class="tbl" id="tblw"><table id="tbl"></table></div>
     <p class="note" id="tblNote"></p>
   </div>
 
@@ -166,8 +216,65 @@ const $ = id => document.getElementById(id);
 const IDS = ['capital','target','days','seed','minTrades','maxTrades','winVolMin','winVolMax','loseVolMin','loseVolMax','maxWinStreak','stopAtTarget','ensure','winRate','winMin','winMax','loseMin','loseMax','buyPrice','jitter','gk','pph','cfx'];
 const DEFAULTS = {}; IDS.forEach(i => DEFAULTS[i] = $(i).value);
 
+/* ---------- ikon ? (penjelasan tiap fitur) ---------- */
+const TIPS = {
+  capital: 'Modal awal MM5 untuk membeli koin. Laba dan ROI dihitung terhadap angka ini.',
+  target: 'Laba bersih yang ingin dicapai MM5, di luar modal. Default Rp373,5 juta (sel F4 di Excel).',
+  days: 'Berapa hari simulasi berjalan. Tiap hari ada beberapa trade.',
+  seed: 'Kode yang mengunci hasil acak. Kode sama = hasil sama persis, jadi bisa diulang dan dibandingkan. Tombol "Acak ulang" menggantinya.',
+  minTrades: 'Jumlah trade paling sedikit dalam sehari. Jumlah tiap hari diacak antara min dan maks.',
+  maxTrades: 'Jumlah trade paling banyak dalam sehari. Batas sesuai skenario: maksimal 4.',
+  winVolMin: 'Nilai Rupiah terkecil untuk trade yang menang. Nilai tiap trade diacak di antara min dan maks, dan tidak pernah melebihi kas MM5.',
+  winVolMax: 'Nilai Rupiah terbesar untuk trade yang menang. Di pola Mas Vino, trade menang berukuran besar (Rp200-325 juta).',
+  loseVolMin: 'Nilai Rupiah terkecil untuk trade yang kalah.',
+  loseVolMax: 'Nilai Rupiah terbesar untuk trade yang kalah. Di pola Mas Vino, trade kalah kecil (Rp1-10 juta), jadi kerugiannya terbatas.',
+  maxWinStreak: 'Setelah menang sebanyak ini berturut-turut, trade berikutnya dipaksa kalah. Ini aturan "MM5 tidak boleh menang terus". Isi 0 untuk tanpa batas.',
+  stopAtTarget: 'Pilih "Berhenti trade" agar trading berhenti begitu laba mencapai target, seperti saat target sudah tercapai di dunia nyata.',
+  ensure: '"Acak apa adanya" menampilkan hasil sesuai kode acak. Dua pilihan lain mencari satu jalur dari banyak simulasi yang kebetulan berakhir untung atau capai target. Itu hanya contoh tampilan, bukan perkiraan hasil. Peluang sebenarnya ada di panel Monte Carlo.',
+  winRate: 'Kemungkinan tiap trade berakhir menang, dalam persen. Aturan menang beruntun di atas tetap berlaku.',
+  winMin: 'Kenaikan harga jual terhadap harga beli paling kecil saat menang. Contoh: 5% = beli 205.000, jual 215.250.',
+  winMax: 'Kenaikan harga jual paling besar saat menang. Contoh Excel: +39% (beli 205.000, jual 285.000), yaitu harga di luar rata-rata pasar.',
+  loseMin: 'Penurunan harga jual paling kecil saat kalah.',
+  loseMax: 'Penurunan harga jual paling besar saat kalah. Contoh Excel: -4,9% (jual 195.000).',
+  buyPrice: 'Harga beli koin per satuan. Di Excel Rp205.000.',
+  jitter: 'Harga beli digeser acak naik atau turun sebesar persen ini, supaya tiap trade tidak persis sama.',
+  gk: 'Fee exchange (GK), dikenakan pada pembeli dan penjual. Inilah pendapatan exchange dari trading.',
+  pph: 'Pajak atas penjualan (di Excel disebut PPH). Hanya dikenakan pada penjual dan disetor ke negara, bukan pendapatan exchange.',
+  cfx: 'Fee untuk bursa CFX, dikenakan pada pembeli dan penjual.',
+  speed: 'Seberapa cepat simulasi diputar. Tidak mengubah hasil, hanya kecepatan tampilan.',
+};
+const H2TIPS = [
+  ['1. Pilih pola', 'Pola mengisi semua pengaturan sekaligus. Mas Vino: trade menang besar di harga jauh di atas rata-rata, trade kalah kecil. Umum: menang dan kalah acak dengan nilai sedang.'],
+  ['2. Modal', 'Pengaturan dasar: modal, target laba, lama simulasi, dan kode acak.'],
+  ['Trade saat ini', 'Menampilkan trade yang sedang berjalan. Satu trade = MM5 membeli koin dari counterparty, lalu menjualnya kembali. Hijau = menang, merah = kalah.'],
+  ['Progres', 'Seberapa dekat laba bersih MM5 dengan target. Bilah hijau berarti target sudah tercapai.'],
+  ['Laba bersih MM5', 'Garis biru: laba bersih MM5 yang bertambah atau berkurang tiap trade, setelah semua fee dan pajak. Garis kuning: target. Bulatan berdenyut: posisi saat ini.'],
+  ['Pendapatan exchange', 'Tiap batang = satu hari. Biru: fee GK (pendapatan exchange). Kuning: pajak (titipan negara). Ungu: fee CFX. Arahkan kursor ke batang untuk melihat angkanya.'],
+  ['Peluang sebenarnya', 'Simulasi diulang 500 kali dengan kode acak berbeda. Ini menunjukkan peluang yang sesungguhnya, sedangkan grafik di atas hanya satu contoh. P10-P90: rentang tempat sebagian besar hasil berada.'],
+  ['Siapa dapat apa', 'Pembagian uang dari semua trade: MM5, counterparty (dicatat terpisah, bukan modal MM5), exchange, negara, dan CFX. Total semua pihak mendekati nol karena uang hanya berpindah.'],
+  ['Rincian setiap trade', 'Satu baris = satu trade. Fee GK, pajak, dan fee CFX adalah total dua sisi (MM5 + counterparty). Laba MM5 = hasil jual dikurangi biaya dan modal trade itu. Laba kumulatif = jumlah laba sampai trade itu. Hasil counterparty = untung/rugi lawan transaksi.'],
+  ['Cek ke Excel', 'Mencocokkan hitungan dashboard dengan empat flow di Excel Mas Vino. "Gain cara Excel" memakai rumus asli Excel; "Laba bersih" juga mengurangkan pajak jual.'],
+];
+function addQ(parent, tip) {
+  const q = document.createElement('span'); q.className = 'q'; q.tabIndex = 0; q.dataset.tip = tip; q.textContent = '?';
+  q.setAttribute('role', 'note'); q.setAttribute('aria-label', 'Penjelasan: ' + tip); parent.appendChild(q);
+}
+document.querySelectorAll('label .q').forEach(e => e.remove());
+for (const id in TIPS) {
+  const el = $(id); let lab = el.previousElementSibling;
+  if (!lab || lab.tagName !== 'LABEL') lab = el.parentElement.querySelector('label');
+  if (lab) addQ(lab, TIPS[id]);
+}
+document.querySelectorAll('h2').forEach(h => { const t = H2TIPS.find(x => h.textContent.startsWith(x[0])); if (t) addQ(h, t[1]); });
+(function () {
+  const flip = e => { const q = e.target.closest && e.target.closest('.q'); if (q) q.classList.toggle('flip', q.getBoundingClientRect().left + 250 > innerWidth - 12); };
+  document.addEventListener('mouseover', flip); document.addEventListener('focusin', flip);
+  document.addEventListener('click', e => { const q = e.target.closest('.q'); document.querySelectorAll('.q.open').forEach(x => x !== q && x.classList.remove('open')); if (q) { flip(e); q.classList.toggle('open'); } });
+})();
+
 const rp = n => (n < 0 ? '−Rp' : 'Rp') + Math.abs(Math.round(n)).toLocaleString('id-ID');
 const rpS = n => { const a = Math.abs(n), s = n < 0 ? '−' : ''; return a >= 1e9 ? s + (a/1e9).toFixed(2).replace('.',',') + ' M' : a >= 1e6 ? s + (a/1e6).toFixed(1).replace('.',',') + ' jt' : s + Math.round(a/1e3) + ' rb'; };
+const pct = (x, d = 1) => (x * 100).toFixed(d).replace('.', ',') + '%';
 const cls = n => n >= 0 ? 'pos' : 'neg';
 
 function params() {
@@ -176,49 +283,45 @@ function params() {
   if (minT > maxT) minT = maxT;
   const wvMin = Math.max(1, v('winVolMin')), wvMax = Math.max(wvMin, v('winVolMax'));
   const lvMin = Math.max(1, v('loseVolMin')), lvMax = Math.max(lvMin, v('loseVolMax'));
-  const volMin = Math.min(wvMin, lvMin), volMax = Math.max(wvMax, lvMax);
   const wmin = v('winMin')/100, wmax = Math.max(wmin, v('winMax')/100), lmin = v('loseMin')/100, lmax = Math.max(lmin, v('loseMax')/100);
   return { capital: v('capital'), target: v('target'), days: Math.max(1, Math.min(365, Math.round(v('days')))),
-    minTrades: minT, maxTrades: maxT, volMin, volMax, winVolMin: wvMin, winVolMax: wvMax, loseVolMin: lvMin, loseVolMax: lvMax,
+    minTrades: minT, maxTrades: maxT, volMin: Math.min(wvMin, lvMin), volMax: Math.max(wvMax, lvMax),
+    winVolMin: wvMin, winVolMax: wvMax, loseVolMin: lvMin, loseVolMax: lvMax,
     maxWinStreak: Math.max(0, Math.round(v('maxWinStreak'))), stopAtTarget: $('stopAtTarget').value === '1', ensure: $('ensure').value,
     winRate: Math.max(0, Math.min(1, v('winRate')/100)), winMin: wmin, winMax: wmax, loseMin: lmin, loseMax: Math.min(lmax, 0.99),
     buyPrice: Math.max(1, v('buyPrice')), jitter: v('jitter')/100,
     gk: v('gk')/100, pph: v('pph')/100, cfx: v('cfx')/100, seed: Math.round(v('seed')) };
 }
 
-/* ---------- grafik SVG ---------- */
+/* ---------- grafik ---------- */
 function niceTicks(lo, hi, n = 5) {
   const span = hi - lo || 1, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
   const step = [1,2,2.5,5,10].map(m => m*mag).find(s => s >= step0) || mag*10;
   const out = []; for (let t = Math.ceil(lo/step)*step; t <= hi + 1e-9; t += step) out.push(t); return out;
 }
-function lineChart(el, series, target, days) {
+function lineChart(el, pts, target, days, dom) {
   const W = 640, H = 270, L = 62, R = 14, T = 12, B = 28;
-  const all = series.concat([0, target]);
-  const lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.06 || 1;
-  const y0 = lo - (lo < 0 ? pad : 0), y1 = hi + pad;
+  const y0 = dom[0], y1 = dom[1];
   const X = d => L + (W-L-R) * d / days, Y = v => T + (H-T-B) * (1 - (v - y0)/(y1 - y0));
   let g = '';
   niceTicks(y0, y1).forEach(t => g += `<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#2a3550"/><text x="${L-6}" y="${Y(t)+4}" text-anchor="end">${rpS(t)}</text>`);
-  for (let d = 0; d <= days; d += Math.max(1, Math.ceil(days/10))) g += `<text x="${X(d)}" y="${H-8}" text-anchor="middle">${d}</text>`;
+  for (let d = 0; d <= days; d += Math.max(1, Math.ceil(days/10))) g += `<text x="${X(d)}" y="${H-8}" text-anchor="middle">hari ${d}</text>`;
   g += `<line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="#4a5778"/>`;
   g += `<line x1="${L}" x2="${W-R}" y1="${Y(target)}" y2="${Y(target)}" stroke="#f0b34a" stroke-dasharray="6 4"/><text x="${W-R}" y="${Y(target)-5}" text-anchor="end" style="fill:#f0b34a">target ${rpS(target)}</text>`;
-  const pts = [[0,0]].concat(series.map((v,i) => [i+1, v]));
-  g += `<polyline fill="none" stroke="#5b9cf5" stroke-width="2.2" points="${pts.map(p => X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"/>`;
+  g += `<polyline fill="none" stroke="#5b9cf5" stroke-width="2.4" stroke-linejoin="round" points="${pts.map(p => X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"/>`;
   const last = pts[pts.length-1];
-  g += `<circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4" fill="#5b9cf5"/>`;
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Laba kumulatif per hari">${g}</svg>`;
+  g += `<circle class="pulse" cx="${X(last[0])}" cy="${Y(last[1])}" r="4" fill="#5b9cf5"/><circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4.5" fill="#5b9cf5"/>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Laba kumulatif MM5">${g}</svg>`;
 }
-function stackChart(el, days) {
+function stackChart(el, days, max) {
   const W = 640, H = 270, L = 62, R = 14, T = 12, B = 28;
-  const max = Math.max(1, ...days.map(d => d.gk + d.tax + d.cfx)) * 1.08;
   const bw = (W-L-R) / days.length, Y = v => T + (H-T-B) * (1 - v/max);
   let g = '';
   niceTicks(0, max).forEach(t => g += `<line x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="#2a3550"/><text x="${L-6}" y="${Y(t)+4}" text-anchor="end">${rpS(t)}</text>`);
   days.forEach((d, i) => {
     let base = 0; const x = L + i*bw + bw*0.12, w = bw*0.76;
-    [['gk','#5b9cf5'],['tax','#f0b34a'],['cfx','#b48cf2']].forEach(([k,c]) => {
-      const h = Y(base) - Y(base + d[k]); g += `<rect x="${x.toFixed(1)}" y="${Y(base+d[k]).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" fill="${c}"><title>Hari ${d.day} · ${k.toUpperCase()}: ${rp(d[k])}</title></rect>`; base += d[k];
+    [['gk','#5b9cf5','Fee GK'],['tax','#f0b34a','Pajak'],['cfx','#b48cf2','Fee CFX']].forEach(([k,c,nm]) => {
+      const h = Y(base) - Y(base + d[k]); g += `<rect x="${x.toFixed(1)}" y="${Y(base+d[k]).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" fill="${c}"><title>Hari ${d.day} · ${nm}: ${rp(d[k])}</title></rect>`; base += d[k];
     });
     if (days.length <= 31 || i % Math.ceil(days.length/15) === 0) g += `<text x="${L + i*bw + bw/2}" y="${H-8}" text-anchor="middle">${d.day}</text>`;
   });
@@ -231,78 +334,152 @@ function histChart(el, finals, target) {
   const mx = Math.max(...cnt), bw = (W-L-R)/bins, X = v => L + (W-L-R)*(v-lo)/span;
   let g = '';
   cnt.forEach((c,i) => { const h = (H-T-B)*c/mx, mid = lo + span*(i+.5)/bins;
-    g += `<rect x="${L+i*bw+1}" y="${H-B-h}" width="${bw-2}" height="${h}" fill="${mid>=0?'#34c78a':'#ef6a6a'}" opacity=".8"><title>${c} simulasi di sekitar ${rp(mid)}</title></rect>`; });
+    g += `<rect x="${L+i*bw+1}" y="${H-B-h}" width="${bw-2}" height="${h}" fill="${mid>=0?'#34c78a':'#ef6a6a'}" opacity=".8"><title>${c} dari ${finals.length} simulasi berakhir di sekitar ${rp(mid)}</title></rect>`; });
   g += `<line x1="${X(0)}" x2="${X(0)}" y1="${T}" y2="${H-B}" stroke="#8f9bb5"/><text x="${X(0)}" y="${H-8}" text-anchor="middle">0</text>`;
   g += `<line x1="${X(target)}" x2="${X(target)}" y1="${T}" y2="${H-B}" stroke="#f0b34a" stroke-dasharray="6 4"/><text x="${X(target)}" y="${H-8}" text-anchor="middle" style="fill:#f0b34a">target</text>`;
-  g += `<text x="${L}" y="${H-8}">${rpS(lo)}</text><text x="${W-R}" y="${H-8}" text-anchor="end">${rpS(hi)}</text>`;
+  g += `<text x="${W-R}" y="${H-8}" text-anchor="end">${rpS(hi)}</text>`;
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Sebaran laba akhir">${g}</svg>`;
 }
 
-/* ---------- render ---------- */
-let last = null;
-function render() {
+/* ---------- state & hitung awal ---------- */
+let last = null, PRE = null, DOM = null, X = null, MAXINC = 1, ANIM = { k: 0, timer: null }, ROWS = 0;
+
+function prepare() {
   const p = params();
-  const s = p.ensure === 'none' ? Sim.simulate(p, p.seed)
-    : Sim.simulateEnding(p, p.seed, p.ensure === 'target' ? p.target : 1);
+  const s = p.ensure === 'none' ? Sim.simulate(p, p.seed) : Sim.simulateEnding(p, p.seed, p.ensure === 'target' ? p.target : 1);
   last = { p, s };
-  const t = s.tot, nTr = s.trades.length, roi = p.capital ? s.final / p.capital : 0;
-  const incTotal = t.gk + t.tax + t.cfx;
-
-  $('kpis').innerHTML = [
-    ['', 'Laba bersih MM5', `<span class="${cls(s.final)}">${rp(s.final)}</span>`, `ROI ${(roi*100).toFixed(1).replace('.',',')}% · ekuitas akhir ${rp(p.capital + s.final)}`],
-    ['', 'Trade (menang / kalah)', `${nTr} <span style="font-size:13px;color:var(--mut)">(<span class="pos">${t.wins}</span> / <span class="neg">${t.losses}</span>)</span>`, `win rate ${nTr ? (t.wins/nTr*100).toFixed(0) : 0}% · maks ${Math.max(0,...s.days.map(d=>d.n))}/hari${t.skipped ? ' · ' + t.skipped + ' dilewati (dana habis)' : ''}`],
-    ['', 'Perputaran (volume beli + jual)', rp(t.turnover), `rata-rata ${rp(nTr ? t.turnover/nTr : 0)} per trade`],
-    ['gk', 'Income exchange (fee GK)', rp(t.gk), 'dua sisi: MM5 + counterparty'],
-    ['tax', 'Pajak (PPN/PPh)', rp(t.tax), 'disetor ke negara, bukan income exchange'],
-    ['cfx', 'Fee CFX', rp(t.cfx), 'dua sisi, dibayar ke CFX'],
-    ['', 'Drawdown maksimum MM5', rp(-s.maxDD), 'penurunan terbesar dari puncak laba'],
-    ['', 'Kas MM5 akhir', rp(s.cash), 'setelah semua posisi ditutup'],
-  ].map(([c,l,v,sub]) => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`).join('');
-
-  const pct = p.target > 0 ? Math.max(0, Math.min(1, s.final / p.target)) : 0;
-  $('progressBar').style.width = (pct*100) + '%';
-  $('progressBar').style.background = s.final >= p.target ? 'var(--win)' : 'var(--accent)';
-  const pick = p.ensure === 'none' ? '' : `<div class="note">Contoh ini dipilih dari ${s.tries} simulasi acak${s.found === false ? ' (tidak ada yang memenuhi, ditampilkan yang terbaik)' : ''}. Ini satu jalur yang mungkin terjadi, bukan perkiraan hasil; lihat Monte Carlo untuk peluang.</div>`;
-  $('progressText').innerHTML = pick + (s.final >= p.target
-    ? `<b class="pos">Target tercapai</b> pada hari ke-${s.hitDay}${s.hitDay && p.stopAtTarget ? ', trade dihentikan' : ''}. Laba ${rp(s.final)} dari target ${rp(p.target)}.`
-    : `<b>Target belum tercapai.</b> Laba ${rp(s.final)} (${(pct*100).toFixed(1).replace('.',',')}% dari target ${rp(p.target)}). Kurang ${rp(p.target - s.final)}. Target setara ROI ${(p.capital ? p.target/p.capital*100 : 0).toFixed(0)}% dari dana MM5.`);
-
-  lineChart($('chartCum'), s.days.map(d => d.cum), p.target, p.days);
-  stackChart($('chartInc'), s.days);
-
+  // posisi x tiap trade (hari ke-n, pecahan sesuai urutan dalam hari)
+  const perDay = {}; s.trades.forEach(t => perDay[t.day] = (perDay[t.day] || 0) + 1);
+  const seen = {}; X = [[0, 0]];
+  let st = { n: 0, wins: 0, losses: 0, gk: 0, tax: 0, cfx: 0, turnover: 0, cp: 0, cum: 0, cash: p.capital, peak: 0, dd: 0 };
+  PRE = [st];
+  s.trades.forEach(t => {
+    seen[t.day] = (seen[t.day] || 0) + 1;
+    X.push([t.day - 1 + seen[t.day] / perDay[t.day], t.cum]);
+    const q = { ...st, n: st.n + 1, wins: st.wins + (t.win ? 1 : 0), losses: st.losses + (t.win ? 0 : 1),
+      gk: st.gk + t.ex.gk, tax: st.tax + t.ex.tax, cfx: st.cfx + t.ex.cfx, turnover: st.turnover + t.turnover,
+      cp: st.cp + t.cp.pnl, cum: t.cum, cash: t.cash };
+    q.peak = Math.max(st.peak, q.cum); q.dd = Math.max(st.dd, q.peak - q.cum);
+    PRE.push(q); st = q;
+  });
+  const all = X.map(a => a[1]).concat([0, p.target]);
+  const lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.06 || 1;
+  DOM = [lo - (lo < 0 ? pad : 0), hi + pad];
+  MAXINC = Math.max(1, ...s.days.map(d => d.gk + d.tax + d.cfx)) * 1.08;
   const mc = Sim.monteCarlo(p, p.seed, 500);
   $('mc').innerHTML = `<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:8px">
-    <div><div class="l" style="color:var(--mut);font-size:12px">Peluang capai target</div><b style="font-size:18px">${(mc.hit/mc.n*100).toFixed(1).replace('.',',')}%</b></div>
-    <div><div class="l" style="color:var(--mut);font-size:12px">Peluang rugi di akhir</div><b style="font-size:18px" class="${mc.loss ? 'neg':'pos'}">${(mc.loss/mc.n*100).toFixed(1).replace('.',',')}%</b></div>
-    <div><div class="l" style="color:var(--mut);font-size:12px">Median laba</div><b style="font-size:18px">${rp(mc.p50)}</b></div></div>
+    <div><div style="color:var(--mut);font-size:12px">Peluang capai target</div><b class="big2">${pct(mc.hit/mc.n)}</b></div>
+    <div><div style="color:var(--mut);font-size:12px">Peluang rugi di akhir</div><b class="big2 ${mc.loss ? 'neg':'pos'}">${pct(mc.loss/mc.n)}</b></div>
+    <div><div style="color:var(--mut);font-size:12px">Laba tengah (median)</div><b class="big2">${rp(mc.p50)}</b></div></div>
     <div id="hist"></div>
-    <p class="note">P10 ${rp(mc.p10)} · P90 ${rp(mc.p90)} · terburuk ${rp(mc.min)} · terbaik ${rp(mc.max)} · rata-rata drawdown ${rp(mc.avgDD)}</p>`;
+    <p class="note">Tiap batang = berapa simulasi yang berakhir di laba itu. Sebagian besar hasil ada di antara ${rp(mc.p10)} dan ${rp(mc.p90)}. Terburuk ${rp(mc.min)}, terbaik ${rp(mc.max)}. Rata-rata penurunan terdalam ${rp(mc.avgDD)}.</p>`;
   histChart($('hist'), mc.finals, p.target);
 
-  $('ledger').innerHTML = `<table style="width:100%"><tbody>
-    <tr><td>MM5 – laba bersih</td><td class="${cls(s.final)}">${rp(s.final)}</td></tr>
-    <tr><td>Counterparty – hasil perdagangan (terpisah)</td><td class="${cls(t.cpPnl)}">${rp(t.cpPnl)}</td></tr>
-    <tr><td>Exchange – fee GK</td><td>${rp(t.gk)}</td></tr>
-    <tr><td>Negara – pajak</td><td>${rp(t.tax)}</td></tr>
-    <tr><td>CFX – fee</td><td>${rp(t.cfx)}</td></tr>
-    <tr><td><b>Jumlah semua pihak</b></td><td>${rp(s.final + t.cpPnl + incTotal)}</td></tr></tbody></table>
-    <p class="note">Jumlah semua pihak tidak persis nol: fee beli dipotong dalam koin dan nilainya di Excel dihitung pada harga beli, sedangkan P&amp;L MM5 dan counterparty memakai harga jual saat koin dilepas. Selisih ini kecil dan wajar. Hasil counterparty hanya cerminan transaksinya dengan MM5, tidak digabung ke modal MM5.</p>`;
-
-  const rows = s.trades.slice(0, 600);
-  $('tbl').innerHTML = `<thead><tr><th>Hari</th><th>#</th><th>Volume beli</th><th>Beli → Jual</th><th>Hasil</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Laba MM5</th><th>Kumulatif</th><th>Hasil counterparty</th></tr></thead><tbody>` +
-    rows.map(x => `<tr class="${x.win?'w':'l'}"><td>${x.day}</td><td>${x.no}</td><td>${rp(x.vol)}</td><td>${Math.round(x.buy).toLocaleString('id-ID')} → ${Math.round(x.sell).toLocaleString('id-ID')} (${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%)</td><td><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td>${rp(x.ex.gk)}</td><td>${rp(x.ex.tax)}</td><td>${rp(x.ex.cfx)}</td><td class="${cls(x.mm.pnl)}">${rp(x.mm.pnl)}</td><td class="${cls(x.cum)}">${rp(x.cum)}</td><td class="${cls(x.cp.pnl)}">${rp(x.cp.pnl)}</td></tr>`).join('') + '</tbody>';
-  $('tblNote').textContent = `Fee GK, pajak, dan fee CFX pada tabel = total dua sisi (MM5 + counterparty) untuk trade itu.${s.trades.length > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
-
-  const rate = { gk: p.gk, pph: p.pph, cfx: p.cfx };
   const flows = [[200e6,285000],[250e6,285000],[325e6,285000],[1e6,195000]];
-  $('xl').innerHTML = `<div class="tbl"><table><thead><tr><th>Flow</th><th>Beli</th><th>Jual</th><th>Gain cara Excel (I16 dst.)</th><th>Laba bersih (pajak dikurangkan)</th><th>Selisih</th></tr></thead><tbody>` +
+  const rate = { gk: p.gk, pph: p.pph, cfx: p.cfx };
+  $('xl').innerHTML = `<div class="tbl"><table><thead><tr><th>Flow</th><th>Beli</th><th>Jual</th><th>Gain cara Excel</th><th>Laba bersih (pajak dikurangkan)</th><th>Selisih</th></tr></thead><tbody>` +
     flows.map(([v,sl],i) => { const f = Sim.flow(v, 205000, sl, rate); return `<tr><td>${i+1}</td><td>${rp(v)} @205.000</td><td>@${sl.toLocaleString('id-ID')}</td><td>${rp(f.mm.excelGain)}</td><td class="${cls(f.mm.pnl)}">${rp(f.mm.pnl)}</td><td>${rp(f.mm.pnl - f.mm.excelGain)}</td></tr>`; }).join('') + `</tbody></table></div>
-    <p class="note">Dihitung dengan tarif yang sedang diisi di panel kiri. Dengan tarif asli draft, gain Excel flow 1 = Rp77.388.998,75 dan laba bersih = Rp76.435.079,74. Selisihnya terutama pajak jual yang tidak dikurangkan di kolom net Excel dan pembanding net beli.</p>`;
+    <p class="note">Memakai tarif di panel kiri. Dengan tarif asli draft, gain Excel flow 1 = Rp77.388.998,75 dan laba bersih = Rp76.435.079,74. Selisihnya terutama pajak jual yang tidak dikurangkan di kolom net Excel.</p>`;
 }
+
+/* ---------- gambar tampilan pada trade ke-k ---------- */
+function draw(k) {
+  const { p, s } = last, st = PRE[k], n = s.trades.length, done = k >= n;
+  const tr = k > 0 ? s.trades[k-1] : null;
+
+  // kontrol
+  $('tl').style.width = (n ? k / n * 100 : 100) + '%';
+  $('stat').textContent = n === 0 ? 'Tidak ada trade' : done ? `Selesai · ${n} trade` : k === 0 ? `Siap · ${n} trade` : `Hari ${tr.day} dari ${p.days} · trade ${k} dari ${n}`;
+
+  // kartu trade saat ini
+  const box = $('tkbox'); box.className = 'card tkbox' + (tr ? (tr.win ? ' w' : ' l') : '');
+  $('tk').className = 'tk' + (tr ? (tr.win ? ' w' : ' l') : '');
+  $('tk').innerHTML = !tr ? `<div class="top">Belum ada trade yang berjalan.</div><div class="main">Tekan "Putar ulang" untuk melihat simulasinya trade demi trade.</div><div></div>` :
+    `<div class="top">Hari ${tr.day} dari ${p.days} · trade ke-${tr.no} di hari ini${done ? ' · <b>simulasi selesai</b>' : ''}</div>
+     <div class="main flash">MM5 beli <b>${rp(tr.vol)}</b> di Rp${Math.round(tr.buy).toLocaleString('id-ID')}/koin, lalu jual di Rp${Math.round(tr.sell).toLocaleString('id-ID')}/koin <b>(${tr.move >= 0 ? '+' : ''}${(tr.move*100).toFixed(1).replace('.',',')}%)</b></div>
+     <div class="res flash"><small>${tr.win ? 'MENANG' : 'KALAH'}</small>${rp(tr.mm.pnl)}</div>
+     <div class="sub flash">Dari trade ini: fee GK ${rp(tr.ex.gk)} · pajak ${rp(tr.ex.tax)} · fee CFX ${rp(tr.ex.cfx)} (total dua sisi)</div>`;
+
+  // kartu ringkasan
+  const roi = p.capital ? st.cum / p.capital : 0;
+  const KP = [
+    ['', 'Laba bersih MM5', `<span class="${cls(st.cum)}">${rp(st.cum)}</span>`, `${pct(roi)} dari modal · ekuitas ${rp(p.capital + st.cum)}`, 'Untung atau rugi MM5 setelah dikurangi semua fee dan pajak. Persen di bawahnya (ROI) = laba dibanding modal. Ekuitas = modal + laba.'],
+    ['', 'Jumlah trade', `${st.n} <span style="font-size:13px;color:var(--mut)">(<span class="pos">${st.wins} menang</span> / <span class="neg">${st.losses} kalah</span>)</span>`, `menang ${st.n ? Math.round(st.wins/st.n*100) : 0}%${s.tot.skipped && done ? ' · ' + s.tot.skipped + ' dilewati (dana habis)' : ''}`, 'Satu trade = MM5 beli koin lalu jual ke counterparty. Menang/kalah ditentukan dari harga jual naik atau turun dibanding harga beli.'],
+    ['', 'Total nilai diperdagangkan', rp(st.turnover), `rata-rata ${rp(st.n ? st.turnover/st.n : 0)} per trade (beli + jual)`, 'Jumlah Rupiah yang berputar: nilai beli ditambah nilai jual dari semua trade. Fee dan pajak dihitung dari angka ini.'],
+    ['gk', 'Income exchange (fee GK)', rp(st.gk), 'fee dari kedua pihak', 'Pendapatan exchange dari fee transaksi. Dikenakan pada pembeli dan penjual, jadi dihitung dari MM5 dan counterparty. Besar tarif ada di pengaturan Tarif.'],
+    ['tax', 'Pajak (PPN/PPh)', rp(st.tax), 'titipan untuk negara, bukan pendapatan', 'Pajak atas penjualan, dibayar penjual dan disetor ke negara. Bukan pendapatan exchange. Di Excel disebut PPH.'],
+    ['cfx', 'Fee CFX', rp(st.cfx), 'dibayar ke CFX, kedua pihak', 'Biaya yang dibayar ke bursa CFX, dari pembeli dan penjual.'],
+    ['', 'Penurunan terdalam MM5', rp(-st.dd), 'jarak terbesar dari laba tertinggi', 'Penurunan terbesar laba MM5 dari titik tertingginya. Makin kecil makin aman: menunjukkan seberapa dalam MM5 pernah "turun" sebelum naik lagi.'],
+    ['', 'Kas MM5 sekarang', rp(st.cash), 'modal + laba bersih sejauh ini', 'Uang tunai MM5 saat ini: modal awal ditambah laba bersih sejauh ini. Trade berikutnya tidak bisa melebihi angka ini.'],
+  ];
+  const kp = $('kpis');
+  if (kp.children.length !== KP.length) {
+    kp.innerHTML = KP.map(([c,l,,,tip]) => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v"></div><div class="s"></div></div>`).join('');
+    KP.forEach(([,,,,tip], i) => addQ(kp.children[i].querySelector('.l'), tip));
+  }
+  KP.forEach(([,,v,sub], i) => { const c = kp.children[i]; c.querySelector('.v').innerHTML = v; c.querySelector('.s').textContent = sub; });
+
+  // progres
+  const ratio = p.target > 0 ? Math.max(0, Math.min(1, st.cum / p.target)) : 0;
+  $('progressBar').style.width = (ratio*100) + '%';
+  $('progressBar').style.background = st.cum >= p.target ? 'var(--win)' : 'var(--accent)';
+  const pick = p.ensure === 'none' || !done ? '' : `<div class="note">Contoh ini dipilih dari ${s.tries} simulasi acak${s.found === false ? ' (tidak ada yang memenuhi, ditampilkan yang terbaik)' : ''}. Ini satu jalur yang mungkin terjadi, bukan perkiraan hasil.</div>`;
+  $('progressText').innerHTML = pick + (st.cum >= p.target
+    ? `<b class="pos">Target tercapai</b>${done && s.hitDay ? ` pada hari ke-${s.hitDay}${p.stopAtTarget ? ', trade dihentikan' : ''}` : ''}. Laba ${rp(st.cum)} dari target ${rp(p.target)}.`
+    : `<b>${done ? 'Target belum tercapai.' : 'Sedang berjalan.'}</b> Laba ${rp(st.cum)} (${pct(ratio)} dari target ${rp(p.target)}). Kurang ${rp(p.target - st.cum)}. Target setara ${(p.capital ? p.target/p.capital*100 : 0).toFixed(0)}% dari modal.`);
+
+  // grafik
+  lineChart($('chartCum'), X.slice(0, k + 1), p.target, p.days, DOM);
+  const dAgg = Array.from({ length: p.days }, (_, i) => ({ day: i + 1, gk: 0, tax: 0, cfx: 0 }));
+  for (let i = 0; i < k; i++) { const t = s.trades[i], d = dAgg[t.day-1]; d.gk += t.ex.gk; d.tax += t.ex.tax; d.cfx += t.ex.cfx; }
+  stackChart($('chartInc'), dAgg, MAXINC);
+
+  // pembukuan
+  $('ledger').innerHTML = `<table style="width:100%"><tbody>
+    <tr><td>MM5 – laba bersih</td><td class="${cls(st.cum)}">${rp(st.cum)}</td></tr>
+    <tr><td>Counterparty – hasil perdagangan (terpisah)</td><td class="${cls(st.cp)}">${rp(st.cp)}</td></tr>
+    <tr><td>Exchange (GK) – fee</td><td>${rp(st.gk)}</td></tr>
+    <tr><td>Negara – pajak</td><td>${rp(st.tax)}</td></tr>
+    <tr><td>CFX – fee</td><td>${rp(st.cfx)}</td></tr>
+    <tr><td><b>Jumlah semua pihak</b></td><td>${rp(st.cum + st.cp + st.gk + st.tax + st.cfx)}</td></tr></tbody></table>
+    <p class="note">Uang hanya berpindah antar pihak, jadi jumlah semua pihak mendekati nol. Selisih kecil muncul karena fee beli dipotong dalam koin dan dinilai di harga beli (cara Excel), sedangkan laba MM5 dan counterparty memakai harga jual. Hasil counterparty tidak digabung ke modal MM5.</p>`;
+
+  // tabel
+  const rowHtml = (x, isNew) => `<tr class="${x.win?'w':'l'}${isNew ? ' new' : ''}"><td>${x.day}</td><td>${x.no}</td><td>${rp(x.vol)}</td><td>${Math.round(x.buy).toLocaleString('id-ID')} → ${Math.round(x.sell).toLocaleString('id-ID')} (${x.move>=0?'+':''}${(x.move*100).toFixed(1).replace('.',',')}%)</td><td><span class="tag ${x.win?'w':'l'}">${x.win?'MENANG':'KALAH'}</span></td><td>${rp(x.ex.gk)}</td><td>${rp(x.ex.tax)}</td><td>${rp(x.ex.cfx)}</td><td class="${cls(x.mm.pnl)}">${rp(x.mm.pnl)}</td><td class="${cls(x.cum)}">${rp(x.cum)}</td><td class="${cls(x.cp.pnl)}">${rp(x.cp.pnl)}</td></tr>`;
+  const shown = Math.min(k, 600);
+  if (ROWS > shown || !$('tbl').tBodies[0]) {
+    $('tbl').innerHTML = `<thead><tr><th>Hari</th><th>#</th><th>Nilai beli</th><th>Harga beli → jual</th><th>Hasil</th><th>Fee GK</th><th>Pajak</th><th>Fee CFX</th><th>Laba MM5</th><th>Laba kumulatif</th><th>Hasil counterparty</th></tr></thead><tbody></tbody>`;
+    ROWS = 0;
+  }
+  const tb = $('tbl').tBodies[0];
+  if (shown > ROWS) {
+    tb.insertAdjacentHTML('beforeend', s.trades.slice(ROWS, shown).map((x, i, a) => rowHtml(x, i === a.length - 1 && !done)).join(''));
+    ROWS = shown; $('tblw').scrollTop = $('tblw').scrollHeight;
+  }
+  $('tblNote').textContent = `Fee GK, pajak, dan fee CFX di tabel adalah total dua sisi (MM5 + counterparty) untuk trade itu.${n > 600 ? ' Tabel dibatasi 600 baris; CSV memuat semua.' : ''}`;
+}
+
+/* ---------- animasi ---------- */
+function stop() { clearInterval(ANIM.timer); ANIM.timer = null; }
+function tick() {
+  const n = last.s.trades.length;
+  if (ANIM.k >= n) { stop(); draw(n); return; }
+  ANIM.k++; draw(ANIM.k);
+  if (ANIM.k >= n) stop();
+}
+function play(fromStart) {
+  stop();
+  if (fromStart || ANIM.k >= last.s.trades.length) { ANIM.k = 0; ROWS = 0; }
+  draw(ANIM.k);
+  if (!last.s.trades.length) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { ANIM.k = last.s.trades.length; draw(ANIM.k); return; }
+  ANIM.timer = setInterval(tick, Math.max(25, 700 / parseFloat($('speed').value)));
+}
+function rerun() { prepare(); play(true); }
 
 function csv() {
   if (!last) return;
-  const h = ['hari','no','volume_beli','harga_beli','harga_jual','hasil','gross_jual','fee_gk_total','pajak_total','fee_cfx_total','laba_mm5','kumulatif_mm5','hasil_counterparty','kas_mm5'];
+  const h = ['hari','no','nilai_beli','harga_beli','harga_jual','hasil','gross_jual','fee_gk_total','pajak_total','fee_cfx_total','laba_mm5','kumulatif_mm5','hasil_counterparty','kas_mm5'];
   const lines = [h.join(',')].concat(last.s.trades.map(x => [x.day,x.no,x.vol.toFixed(2),x.buy.toFixed(2),x.sell.toFixed(2),x.win?'menang':'kalah',x.gross.toFixed(2),x.ex.gk.toFixed(2),x.ex.tax.toFixed(2),x.ex.cfx.toFixed(2),x.mm.pnl.toFixed(2),x.cum.toFixed(2),x.cp.pnl.toFixed(2),x.cash.toFixed(2)].join(',')));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
@@ -310,14 +487,18 @@ function csv() {
 }
 
 let timer;
-IDS.forEach(i => $(i).addEventListener($(i).tagName === 'SELECT' ? 'change' : 'input', () => { clearTimeout(timer); timer = setTimeout(render, 120); }));
-$('reroll').onclick = () => { $('seed').value = Math.floor(Math.random() * 1e9); render(); };
-$('reset').onclick = () => { IDS.forEach(i => $(i).value = DEFAULTS[i]); render(); };
+IDS.forEach(i => $(i).addEventListener($(i).tagName === 'SELECT' ? 'change' : 'input', () => { clearTimeout(timer); timer = setTimeout(rerun, 200); }));
+$('play').onclick = () => play(true);
+$('pause').onclick = () => { if (ANIM.timer) { stop(); $('pause').textContent = '▶ Lanjut'; } else { $('pause').textContent = '⏸ Jeda'; play(false); } };
+$('skip').onclick = () => { stop(); $('pause').textContent = '⏸ Jeda'; ANIM.k = last.s.trades.length; draw(ANIM.k); };
+$('speed').onchange = () => { if (ANIM.timer) play(false); };
+$('reroll').onclick = () => { $('seed').value = Math.floor(Math.random() * 1e9); rerun(); };
+$('reset').onclick = () => { IDS.forEach(i => $(i).value = DEFAULTS[i]); rerun(); };
 $('csv').onclick = csv;
-function setP(o) { Object.keys(o).forEach(k => $(k).value = o[k]); render(); }
+function setP(o) { Object.keys(o).forEach(k => $(k).value = o[k]); rerun(); }
 $('pVino').onclick = () => setP({ winRate: 40, winMin: 9.3, winMax: 38.7, loseMin: 3, loseMax: 5, winVolMin: 200000000, winVolMax: 325000000, loseVolMin: 1000000, loseVolMax: 10000000, buyPrice: 205000, jitter: 0, maxWinStreak: 3, stopAtTarget: '1', ensure: 'none', minTrades: 1, maxTrades: 4 });
 $('pUmum').onclick = () => setP({ winRate: 55, winMin: 5, winMax: 25, loseMin: 3, loseMax: 12, winVolMin: 10000000, winVolMax: 150000000, loseVolMin: 10000000, loseVolMax: 150000000, buyPrice: 205000, jitter: 2, maxWinStreak: 0, stopAtTarget: '0', ensure: 'none', minTrades: 1, maxTrades: 4 });
-render();
+rerun();
 </script>
 </body>
 </html>
