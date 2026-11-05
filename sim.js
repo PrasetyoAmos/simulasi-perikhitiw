@@ -58,11 +58,25 @@
     const tot = { gk: 0, tax: 0, cfx: 0, turnover: 0, cpPnl: 0, wins: 0, losses: 0, skipped: 0 };
     let hitDay = null, streak = 0;
 
+    // Mode "total nilai + jumlah trade": bagi total beli ke N trade secara acak (tidak seragam)
+    // dan sebar N trade ke hari-hari (maks maxTrades per hari).
+    let plan = null;
+    if (p.totalAmount > 0 && p.totalTrades > 0) {
+      const cap = Math.max(1, p.maxTrades || 4), N = Math.min(Math.round(p.totalTrades), p.days * cap);
+      const slots = [];
+      for (let d = 1; d <= p.days; d++) for (let i = 0; i < cap; i++) slots.push(d);
+      for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = slots[i]; slots[i] = slots[j]; slots[j] = t; }
+      const count = {}; slots.slice(0, N).forEach(d => count[d] = (count[d] || 0) + 1);
+      const w = Array.from({ length: N }, () => -Math.log(1 - r() * 0.97) + 0.05);
+      const sw = w.reduce((a, b) => a + b, 0);
+      plan = { count, vols: w.map(x => p.totalAmount * x / sw), next: 0 };
+    }
+
     for (let d = 1; d <= p.days; d++) {
       if (p.stopAtTarget && hitDay !== null) {   // target sudah tercapai: tidak trade lagi
         days.push({ day: d, n: 0, gk: 0, tax: 0, cfx: 0, pnl: 0, cum, cash }); continue;
       }
-      const n = randInt(r, p.minTrades, p.maxTrades);
+      const n = plan ? (plan.count[d] || 0) : randInt(r, p.minTrades, p.maxTrades);
       const day = { day: d, n: 0, gk: 0, tax: 0, cfx: 0, pnl: 0 };
       for (let i = 1; i <= n; i++) {
         const u = r();
@@ -72,12 +86,12 @@
         streak = win ? streak + 1 : 0;
         const vMin = win ? (p.winVolMin || p.volMin) : (p.loseVolMin || p.volMin);
         const vMax = win ? (p.winVolMax || p.volMax) : (p.loseVolMax || p.volMax);
-        const volWanted = Math.exp(Math.log(vMin) + (Math.log(vMax) - Math.log(vMin)) * u);
+        const volWanted = plan ? plan.vols[plan.next++] : Math.exp(Math.log(vMin) + (Math.log(vMax) - Math.log(vMin)) * u);
         const move = win ? uni(r, p.winMin, p.winMax) : -uni(r, p.loseMin, p.loseMax);
         const buy = p.buyPrice * (1 + p.jitter * (r() * 2 - 1));
         const sell = buy * (1 + move);
         const vol = Math.min(volWanted, cash);
-        if (vol < p.volMin * 0.1) { tot.skipped++; continue; }   // dana habis
+        if (vol < (plan ? 1000 : p.volMin * 0.1)) { tot.skipped++; continue; }   // dana habis
         const f = flow(vol, buy, sell, rate);
         cash += f.mm.pnl; cum += f.mm.pnl;
         if (hitDay === null && cum >= p.target) hitDay = d;
