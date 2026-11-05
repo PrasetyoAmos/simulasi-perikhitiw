@@ -49,6 +49,8 @@ main{min-width:0}
 .bp .bh{font-weight:700;font-size:14px}.bp .bh small{color:var(--mut);font-weight:400;margin-left:6px}
 .bp .bv{font-size:24px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}.bp .bd{font-size:12.5px;margin:2px 0 8px;color:var(--mut)}
 .br{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--line);font-size:13px;font-variant-numeric:tabular-nums}.br span:first-child{color:var(--mut)}
+.vbars{display:flex;align-items:flex-end;gap:2px;height:64px;margin:4px 0 2px}.vbars i{flex:1;background:var(--gk);opacity:.75;border-radius:2px 2px 0 0;min-width:2px}.vbars i.now{background:var(--win);opacity:1}
+.vax{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-bottom:8px}
 .bt{margin-top:12px;overflow-x:auto}.bt table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}.bt th{color:var(--mut);font-weight:600;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}.bt td{text-align:right;padding:6px 8px;border-bottom:1px dashed var(--line)}.bt th:first-child,.bt td:first-child{text-align:left}
 .card h2{margin:0 0 12px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700}
 main>*{margin-bottom:16px}
@@ -291,7 +293,7 @@ table.data tbody tr.tr:hover td{background-image:linear-gradient(#5b9cf51a,#5b9c
 
   <div class="kpis" id="kpis"></div>
 
-  <div class="card"><h2>Monitoring saldo MM5 (IDR &amp; koin)</h2><div id="bal"></div></div>
+  <div class="card"><h2>Monitoring saldo MM5 &amp; volume di GK</h2><div id="bal"></div></div>
 
   <div class="grid2">
     <div class="card"><h2>Laba bersih MM5 dari waktu ke waktu</h2><div id="chartCum"></div>
@@ -356,7 +358,7 @@ const TIPS = {
   speed: 'Seberapa cepat simulasi diputar. Tidak mengubah hasil, hanya kecepatan tampilan.',
 };
 const H2TIPS = [
-  ['Monitoring saldo', 'Saldo MM5 saat ini: Rupiah (IDR) dan koin. Tiap trade, koin dibeli lalu dijual habis, jadi saldo koin kembali ke awal sedangkan saldo IDR berubah sebesar laba/rugi. Tabel bawah menunjukkan saldo setelah beli dan setelah jual untuk trade terakhir.'],
+  ['Monitoring saldo', 'Kiri: saldo Rupiah MM5 (koin selalu dibeli lalu dijual habis, jadi tidak ada sisa koin). Kanan: volume transaksi yang tercipta di GK (nilai beli + nilai jual semua trade), per hari dan total. Batang hijau = hari berjalan.'],
   ['1. Pilih pola', 'Pola jadi, mengisi semua pengaturan sekaligus: Mas Vino (sesuai Excel), Kecil, Sedang, Besar, Agresif. Setelah dipilih, semua angka masih bisa diubah manual di pengaturan lanjutan.'],
   ['2. Modal', 'Pengaturan dasar: modal, target laba, lama simulasi, dan kode acak.'],
   ['Trade saat ini', 'Menampilkan trade yang sedang berjalan. Satu trade = MM5 membeli koin dari counterparty, lalu menjualnya kembali. Hijau = menang, merah = kalah.'],
@@ -558,25 +560,31 @@ function draw(k) {
   for (let i = 0; i < k; i++) { const t = s.trades[i], d = dAgg[t.day-1]; d.gk += t.ex.gk; d.tax += t.ex.tax; d.cfx += t.ex.cfx; }
   stackChart($('chartInc'), dAgg, MAXINC);
 
-  // monitoring saldo MM5
+  // monitoring saldo MM5 + volume di GK
   (function () {
-    let vol = 0, gross = 0, sf = 0, tx = 0, cB = 0, cF = 0, cS = 0;
-    for (let i = 0; i < k; i++) { const t = s.trades[i]; vol += t.vol; gross += t.gross; sf += t.mm.sellGK + t.mm.sellCFX; tx += t.mm.sellTax; cB += t.E; cF += t.E - t.Enet; cS += t.Enet; }
-    const idr0 = p.capital, idr1 = st.cash, c0 = 0, c1 = (v => Math.abs(v) < 1e-6 ? 0 : v)(c0 + cB - cF - cS), chk = idr0 - vol + gross - sf - tx;
+    let vol = 0, gross = 0, sf = 0, tx = 0, coin = 0;
+    const dv = Array.from({ length: p.days }, () => 0), dn = Array.from({ length: p.days }, () => 0);
+    for (let i = 0; i < k; i++) { const t = s.trades[i]; vol += t.vol; gross += t.gross; sf += t.mm.sellGK + t.mm.sellCFX; tx += t.mm.sellTax; coin += t.E + t.Enet; dv[t.day-1] += t.vol + t.gross; dn[t.day-1]++; }
+    const idr0 = p.capital, idr1 = st.cash, chk = idr0 - vol + gross - sf - tx, total = vol + gross;
     const dlt = (a, b) => `<span class="${cls(b - a)}">${b - a >= 0 ? '▲ +' : '▼ −'}${rp(Math.abs(b - a)).replace('−','')}</span>`;
     const row = (l, v, c) => `<div class="br"><span>${l}</span><span class="${c || ''}">${v}</span></div>`;
+    const active = dv.filter(v => v > 0).length, mx = Math.max(1, ...dv), bi = dv.indexOf(Math.max(...dv));
+    const today = k ? s.trades[k-1].day : 0;
+    const bars = dv.map((v, i) => `<i class="${i + 1 === today ? 'now' : ''}" style="height:${Math.max(v ? 4 : 1, v / mx * 100)}%" title="Hari ${i + 1}: ${rp(v)} · ${dn[i]} trade"></i>`).join('');
     const last = s.trades.slice(Math.max(0, k - 6), k).reverse().map(t => {
       const bef = t.cash - t.mm.pnl;
-      return `<tr><td>#${t.no} h${t.day}</td><td>${rp(bef)}</td><td>${rp(bef - t.vol)}</td><td>${kn(t.Enet)}</td><td><b>${rp(t.cash)}</b></td><td>${kn(c0)}</td></tr>`; }).join('');
+      return `<tr><td>#${t.no} h${t.day}</td><td>${rp(bef)}</td><td>${rp(bef - t.vol)}</td><td><b>${rp(t.cash)}</b></td><td>${rp(t.vol + t.gross)}</td></tr>`; }).join('');
     $('bal').innerHTML = `<div class="balg">
-      <div class="bp"><div class="bh">💵 IDR <small>saldo Rupiah</small></div>
+      <div class="bp"><div class="bh">💵 IDR <small>saldo Rupiah MM5</small></div>
         <div class="bv">${rp(idr1)}</div><div class="bd">${dlt(idr0, idr1)} dari awal</div>
         ${row('Awal', rp(idr0))}${row('🛒 Beli koin (modal berputar)', '−' + rp(vol).replace('−',''), 'neg')}${row('💰 Hasil jual', '+' + rp(gross), 'pos')}${row('🏦 Fee jual (GK+CFX)', '−' + rp(sf), 'neg')}${row('🏛 Pajak', '−' + rp(tx), 'neg')}${row('= Akhir', rp(chk))}</div>
-      <div class="bp"><div class="bh">🪙 KOIN <small>saldo koin</small></div>
-        <div class="bv">${kn(c1)} koin</div><div class="bd">≈ ${rp(c1 * (k ? s.trades[k-1].sell : p.buyPrice))} · dibeli lalu dijual habis</div>
-        ${row('Awal', kn(c0) + ' koin')}${row('🛒 Dibeli', '+' + kn(cB), 'pos')}${row('🏦 Fee beli (GK+CFX, dari koin)', '−' + kn(cF), 'neg')}${row('💰 Dijual', '−' + kn(cS), 'neg')}${row('= Akhir', kn(c1) + ' koin')}</div>
+      <div class="bp"><div class="bh">📊 VOLUME <small>tercipta di GK</small></div>
+        <div class="bv">${rp(total)}</div><div class="bd">total semua trade · ${kn(coin)} koin</div>
+        <div class="vbars" title="Volume per hari">${bars}</div>
+        <div class="vax"><span>hari 1</span><span>hari ${p.days}</span></div>
+        ${row('📅 Hari ini (hari ' + (today || '–') + ')', rp(today ? dv[today-1] : 0))}${row('📈 Rata-rata / hari aktif', rp(active ? total / active : 0))}${row('🔝 Tersibuk', active ? 'hari ' + (bi + 1) + ' · ' + rp(dv[bi]) : '–')}${row('🛒 Beli + 💰 Jual', rp(vol) + ' + ' + rp(gross))}</div>
     </div>
-    ${k ? `<div class="bt"><table class="plain mini2"><thead><tr><th>Trade</th><th>IDR sebelum</th><th>IDR setelah beli</th><th>Koin setelah beli</th><th>IDR setelah jual</th><th>Koin setelah jual</th></tr></thead><tbody>${last}</tbody></table></div>` : ''}`;
+    ${k ? `<div class="bt"><table class="plain mini2"><thead><tr><th>Trade</th><th>IDR sebelum</th><th>IDR setelah beli</th><th>IDR setelah jual</th><th>Volume trade</th></tr></thead><tbody>${last}</tbody></table></div>` : ''}`;
   })();
 
   // pembukuan
