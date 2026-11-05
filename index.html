@@ -13,7 +13,7 @@ h1{font-size:26px;margin:0 0 6px}
 .lead{color:var(--mut);margin:0 0 22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
 .card h2{font-size:15px;margin:0 0 12px;color:var(--mut);font-weight:600}
-.pick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 @media(max-width:700px){.pick{grid-template-columns:1fr}.big{grid-template-columns:1fr!important}}
 .opt{border:2px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;text-align:left;cursor:pointer;font:inherit;color:inherit}
 .opt b{display:block;font-size:16px}.opt span{font-size:13px;color:var(--mut)}
@@ -64,6 +64,7 @@ ul.s{margin:6px 0 0;padding-left:20px}
 
   <div class="card"><h2>Catatan</h2>
     <ul class="s small">
+      <li>Skenario "Seperti Excel Mas Vino": transaksi menang berukuran besar (Rp200–325 juta) di harga sekitar 9–39% di atas harga beli, transaksi kalah kecil (Rp1–10 juta) dengan rugi 3–5%, dan MM5 tidak menang lebih dari 3 kali beruntun. Peluang target tinggi karena asumsi harga tersebut, bukan karena hasil nyata.</li>
       <li>Satu transaksi = MM5 membeli koin, lalu menjualnya ke pihak lawan (counterparty).</li>
       <li>Pendapatan perusahaan dihitung dari fee kedua pihak. Pajak hanya dititipkan, bukan pendapatan.</li>
       <li>Counterparty adalah pihak independen. Untung-ruginya dicatat terpisah dan tidak masuk modal MM5.</li>
@@ -76,10 +77,11 @@ ul.s{margin:6px 0 0;padding-left:20px}
 const $=id=>document.getElementById(id);
 const rate={gk:0.0018,pph:0.0021,cfx:0.0000555};
 const SC=[
+ {k:'vino',n:'Seperti Excel Mas Vino',d:'MM5 sering kalah (kecil), sesekali menang besar di harga di luar rata-rata. Berhenti trade saat target tercapai.',winRate:.4,winMin:.093,winMax:.387,loseMin:.03,loseMax:.05,winVolMin:200e6,winVolMax:325e6,loseVolMin:1e6,loseVolMax:10e6,jitter:0,maxWinStreak:3,stopAtTarget:true},
  {k:'kons',n:'Hati-hati',d:'Menang sekitar 50% dari transaksi, untung kecil.',winRate:.5,winMin:.03,winMax:.10,loseMin:.03,loseMax:.12},
  {k:'normal',n:'Wajar',d:'Menang sekitar 55%, untung dan rugi sedang.',winRate:.55,winMin:.05,winMax:.25,loseMin:.03,loseMax:.12},
  {k:'opt',n:'Bagus',d:'Menang sekitar 65%, untung lebih besar.',winRate:.65,winMin:.10,winMax:.30,loseMin:.02,loseMax:.08}];
-let cur=1, seed=12345;
+let cur=0, seed=12345;
 const rp=n=>(n<0?'−Rp':'Rp')+Math.abs(Math.round(n)).toLocaleString('id-ID');
 const juta=n=>{const a=Math.abs(n),s=n<0?'−':'';return a>=1e9?s+'Rp'+(a/1e9).toFixed(2).replace('.',',')+' miliar':s+'Rp'+(a/1e6).toFixed(1).replace('.',',')+' juta'};
 const cls=n=>n>=0?'pos':'neg';
@@ -109,7 +111,7 @@ function render(){
   $('pick').innerHTML=SC.map((c,i)=>`<button class="opt ${i===cur?'on':''}" data-i="${i}"><b>${c.n}</b><span>${c.d}</span></button>`).join('');
   document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{cur=+b.dataset.i;render()});
   const hit=s.final>=p.target;
-  $('story').innerHTML=`Dalam <b>${p.days} hari</b> terjadi <b>${n} transaksi</b> (<span class="pos"><b>${t.wins} untung</b></span>, <span class="neg"><b>${t.losses} rugi</b></span>). Perusahaan menerima fee transaksi <b>${juta(t.gk)}</b>. MM5 sendiri ${s.final>=0?'untung':'rugi'} <b class="${cls(s.final)}">${juta(Math.abs(s.final))}</b> dari modal ${juta(p.capital)} (${(s.final/p.capital*100).toFixed(1).replace('.',',')}%).`;
+  $('story').innerHTML=`Dalam <b>${p.days} hari</b> terjadi <b>${n} transaksi</b> (<span class="pos"><b>${t.wins} untung</b></span>, <span class="neg"><b>${t.losses} rugi</b></span>). Perusahaan menerima fee transaksi <b>${juta(t.gk)}</b>. ${t.losses>t.wins?`Meski lebih sering kalah, `:''}MM5 sendiri ${s.final>=0?'untung':'rugi'} <b class="${cls(s.final)}">${juta(Math.abs(s.final))}</b> dari modal ${juta(p.capital)} (${(s.final/p.capital*100).toFixed(1).replace('.',',')}%).${s.hitDay&&p.stopAtTarget?` Target tercapai di hari ke-${s.hitDay}, setelah itu trade dihentikan.`:''}`;
   $('big').innerHTML=[
    ['a','Hasil MM5',`<span class="${cls(s.final)}">${juta(s.final)}</span>`,'untung/rugi bersih setelah semua biaya'],
    ['b','Pendapatan perusahaan',juta(t.gk),'fee transaksi dari kedua pihak'],
